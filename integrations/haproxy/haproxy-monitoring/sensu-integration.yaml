@@ -8,7 +8,7 @@ spec:
   class: supported
   provider: monitoring
   display_name: HAProxy monitoring
-  short_description: Monitor HAProxy service health and performance
+  short_description: Collect HAProxy service metrics in Prometheus format
   supported_platforms:
     - darwin
     - linux
@@ -24,50 +24,65 @@ spec:
     - "@echlebek"
   prompts:
     - type: section
-      title: Configure Check Parameters
+      title: HAProxy Stats Socket Paths and Stats Page URLs
     - type: markdown
       body: |
-        Configure the haproxy-check CLI parameters, including HAProxy server URLs and security settings.
+        Provide the paths and URLs for the HAProxy stats sockets and stats pages whose metrics you want to collect. TLS is supported.supported
+
+        For example:
+
+        * `/var/run/socket`
+        * `unix:///var/run/socket`
+        * `http://haproxy.box/stats;csv`
+
+        Also, specify the interval for collecting metrics from the sockets and pages (in seconds).
     - type: question
       name: haproxy_urls
       required: false
       input:
         type: string
-        title: HAProxy URLs
+        title: HAProxy stats socket paths and stats page URLs
         description: >-
-          Provide one or more URLs to the HAProxy stats socket or the HAProxy stats pages. You can specify unix sockets like /var/run/socket, or unix:///var/run/socket. You can use also HTTP URLs like http://haproxy.box/stats;csv. TLS is supported. Multiple values must be comma-separated.
-        default: /var/lib/haproxy/stats
+          Enter the stats socket paths and stats page URLs for metrics collection (use a comma-separated list for multiple values)
+        default: unix:///run/haproxy/admin.sock
+    - type: question
+      name: interval
+      input:
+        type: integer
+        title: Interval
+        description: >-
+          Specify the metrics collection interval, in seconds (60 = 1 minute, 300 = 5 minutes, 600 = 10 minutes)
+        default: 30
     - type: section
-      title: Configure Event Processing Pipelines
+      title: Sensu Subscriptions
     - type: markdown
       body: |
-        Configure the event processing pipelines for processing HAProxy events and metrics.
+        Specify the subscriptions for Sensu agents that should execute the `haproxy-metrics` check
+    - type: question
+      name: subscriptions
+      input:
+        type: array
+        items:
+          type: string
+          title: Sensu Subscriptions
+          ref: core/v2/entity/subscriptions
+        default:
+          - haproxy
+    - type: section
+      title: Pipeline Configuration
+    - type: markdown
+      body: |
+        Name the [pipelines] you want to use to process HAProxy Monitoring integration data.
+
+        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/pipelines/
     - type: question
       name: metrics_pipeline
       required: false
       input:
         type: string
-        title: Metrics Pipeline
+        title: Metrics pipeline name
         description: >-
-          How do you want to process metrics collected by this integration?
-        ref: core/v2/pipeline/metadata/name
-    - type: question
-      name: alerts_pipeline
-      required: false
-      input:
-        type: string
-        title: Alert Pipeline
-        description: >-
-          How do you want to be alerted for failures detected by this integration (e.g. Slack or Microsoft Teams)?
-        ref: core/v2/pipeline/metadata/name
-    - type: question
-      name: incidents_pipeline
-      required: false
-      input:
-        type: string
-        title: Incident Pipeline
-        description: >-
-          How do you want to process incidents for failures detected by this integration (e.g. Atlassian JIRA/ServiceDesk, or Pagerduty)?
+          Which pipeline do you want to use to process the metrics this integration collects?
         ref: core/v2/pipeline/metadata/name
   resource_patches:
     - resource:
@@ -75,24 +90,26 @@ spec:
         type: CheckConfig
         name: haproxy-metrics
       patches:
+        - op: replace
+          path: /spec/interval
+          value: interval
+        - op: replace
+          path: /spec/subscriptions
+          value: subscriptions
         - path: /spec/pipelines/-
           op: add
           value:
             api_version: core/v2
             type: Pipeline
             name: "[[metrics_pipeline]]"
-        - path: /spec/pipelines/-
-          op: add
-          value:
-            api_version: core/v2
-            type: Pipeline
-            name: "[[alerts_pipeline]]"
-        - path: /spec/pipelines/-
-          op: add
-          value:
-            api_version: core/v2
-            type: Pipeline
-            name: "[[incidents_pipeline]]"
         - path: /spec/env_vars/-
           op: add
           value: "URLS=[[haproxy_urls]]"
+  post_install:
+    - type: section
+      title: Success
+    - type: markdown
+      body: |
+        You enabled the HAProxy Monitoring integration for `[[haproxy_urls]]`.
+
+        The `haproxy-metrics` check will run for all Sensu agents with these subscriptions: [[subscriptions]].
