@@ -7,8 +7,8 @@ metadata:
 spec:
   class: supported
   provider: monitoring
-  display_name: NGINX monitoring
-  short_description: Monitor NGINX service health and performance
+  display_name: NGINX Monitoring
+  short_description: Monitor NGINX service health and collect metrics
   supported_platforms:
     - darwin
     - linux
@@ -23,40 +23,41 @@ spec:
     - "@calebhailey"
   prompts:
     - type: section
-      title: Configure NGINX URL & Monitoring Thresholds
+      title: Configure NGINX URL and Monitoring Thresholds
     - type: markdown
       body: |
-        This integration collects metrics from NGINX.
-        Configure the alerting thresholds for active and waiting connections.
+        Specify the NGINX stub status URL and alerting thresholds for numbers of active and waiting connections.
     - type: question
       name: default_url
       required: false
       input:
         type: string
-        title: Default NGINX status URL
-        description: The default NGINX stub_status URL (e.g. http://127.0.0.1:80/nginx_status).
+        title: NGINX stub status URL
+        description: Enter the NGINX stub_status URL
         default: http://127.0.0.1:80/nginx_status
     - type: question
       name: nginx_active_warn
       required: false
       input:
         type: integer
-        title: Active Connections Warning Threshold
-        description: The "nginx_active" warning threshold.
+        title: Maximum active connections
+        description: >-
+          Enter the maximum number of active connections to allow before sending a WARNING event (default is `300`)
         default: 300
     - type: question
       name: nginx_waiting_warn
       required: false
       input:
         type: integer
-        title: Waiting Connection Warning Threshold
-        description: The "nginx_waiting" warning threshold.
+        title: Maximum waiting connections
+        description: >-
+          Enter the maximum number of waiting connections to allow before sending a WARNING event (default is `30`)
         default: 30
     - type: section
       title: Configure Sensu Subscriptions
     - type: markdown
       body: |
-        Configure which Sensu Agent subscriptions this check should be run on.
+        Specify the subscriptions for Sensu agents that should execute the `nginx-metrics` check.
     - type: question
       name: subscriptions
       input:
@@ -68,28 +69,20 @@ spec:
         default:
           - nginx
     - type: section
-      title: Configure Event Processing Pipelines
+      title: Pipeline Configuration
     - type: markdown
       body: |
-        Configure the event processing pipelines for processing NGINX events and metrics.
-    - type: question
-      name: metrics_pipeline
-      required: false
-      input:
-        type: string
-        title: Metrics Pipeline
-        description: >-
-          How do you want to process metrics collected by this integration?
-        ref: core/v2/pipeline/metadata/name
-        refFilter: .labels.provider == "metrics"
+        Name the [pipelines] you want to use to process NGINX Monitoring integration data.
+
+        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/pipelines/
     - type: question
       name: alerts_pipeline
       required: false
       input:
         type: string
-        title: Alert Pipeline
+        title: Alert pipeline name
         description: >-
-          How do you want to be alerted for failures detected by this integration (e.g. Slack or Microsoft Teams)?
+          Which pipeline do you want to use for alerts due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "alerts"
     - type: question
@@ -97,11 +90,21 @@ spec:
       required: false
       input:
         type: string
-        title: Incident Pipeline
+        title: Incident pipeline name
         description: >-
-          How do you want to process incidents for failures detected by this integration (e.g. Atlassian JIRA/ServiceDesk, or Pagerduty)?
+          Which pipeline do you want to use to process incidents due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "incidents"
+    - type: question
+      name: metrics_pipeline
+      required: false
+      input:
+        type: string
+        title: Metrics pipeline name
+        description: >-
+          Which pipeline do you want to use to process the metrics this integration collects?
+        ref: core/v2/pipeline/metadata/name
+        refFilter: .labels.provider == "metrics"
   resource_patches:
     - resource:
         api_version: core/v2
@@ -140,3 +143,11 @@ spec:
         - path: /spec/output_metric_thresholds/1/thresholds/0/max
           op: replace
           value: "[[nginx_waiting_warn]]"
+  post_install:
+    - type: section
+      title: Success
+    - type: markdown
+      body: |
+        You enabled the NGINX Monitoring integration.
+
+        The `nginx-metrics` check will run for all Sensu agents with these subscriptions: [[subscriptions]].
