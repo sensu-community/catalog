@@ -8,7 +8,7 @@ spec:
   class: supported
   provider: events
   display_name: AWS SNS Events
-  short_description: Publishes Sensu Events as AWS SNS Messages
+  short_description: Publish Sensu events as Amazon SNS messages
   supported_platforms:
     - darwin
     - linux
@@ -19,25 +19,55 @@ spec:
     - "@sensu"
   prompts:
     - type: section
-      title: AWS SNS Topic
+      title: AWS Configuration
     - type: markdown
       body: |
-        This integration requires access to an AWS SNS Topic.
+        Provide these AWS configuration parameters:
+
+        * AWS region
+        * Amazon resource name (ARN) for the Amazon SNS topic
+        * AWS access key ID + AWS secret access key
     - type: question
       name: aws_region
       required: true
       input:
         type: string
-        title: AWS Region
-        default: us-west-2
-        description: AWS Region
+        title: AWS region
+        description: >-
+          Select an AWS region
+        enum:
+          - us-east-1
+          - us-east-2
+          - us-west-1
+          - us-west-2
+          - af-south-1
+          - ap-east-1
+          - ap-southeast-3
+          - ap-south-1
+          - ap-northeast-3
+          - ap-northeast-2
+          - ap-southeast-1
+          - ap-southeast-2
+          - ap-northeast-1
+          - ca-central-1
+          - eu-central-1
+          - eu-west-1
+          - eu-west-2
+          - eu-south-1
+          - eu-west-3
+          - eu-north-1
+          - me-south-1
+          - sa-east-1
+          - us-gov-east-1
+          - us-gov-west-1
+        default: us-east-1
     - type: question
       name: sns_topic_arn
       required: true
       input:
         type: string
-        title: AWS SNS Topic ARN
-        description: AWS SNS Topic ARN
+        title: Amazon SNS topic ARN
+        description: Enter the ARN for the Amazon SNS topic
     - type: question
       name: aws_access_key_id
       required: true
@@ -51,17 +81,17 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Access Key ID
+                title: AWS access key ID
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the AWS access key ID
               secret:
                 type: string
-                title: AWS Access Key ID (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the AWS Access Key ID (Sensu Secret)
+                  Enter the secret name for the AWS access key ID
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -70,17 +100,17 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Access Key ID
+                title: AWS access key ID
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the AWS access key ID as a backend environment variable
               env_var:
                 type: string
-                title: AWS Access Key ID
+                title: AWS access key ID
                 description: >-
-                  Provide the AWS Access Key ID (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the AWS access key ID (ID will be stored in the Sensu API as unencrypted plaintext)
     - type: question
       name: aws_secret_access_key
       required: true
@@ -94,17 +124,17 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Secret Access Key
+                title: AWS secret access key
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the AWS secret access key
               secret:
                 type: string
-                title: AWS Secret Access Key (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the AWS Secret Access Key (Sensu Secret)
+                  Enter the secret name for the AWS secret access key
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -113,17 +143,17 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Secret Access Key
+                title: AWS secret access key
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the AWS secret access key as a backend environment variable
               env_var:
                 type: string
-                title: AWS Secret Access Key
+                title: AWS secret access key
                 description: >-
-                  Provide the AWS Secret Access Key (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the AWS secret access key (key will be stored in the Sensu API as unencrypted plaintext)
   resource_patches:
     - resource:
         api_version: core/v2
@@ -157,9 +187,11 @@ spec:
       title: Success
     - type: markdown
       body: |
-        You have successfully enabled the AWS SNS pipeline integration.
+        You enabled the AWS SNS Events integration.
 
-        Checks configured with the `aws-sns-events` pipeline will be forwarded to the `[[sns_topic_arn]]` AWS SNS topic ARN.
+        Sensu will forward events from checks that reference the `aws-sns-events` pipeline to the `[[sns_topic_arn]]` Amazon SNS topic ARN.
+
+        Add the `aws-sns-events` pipeline reference to one or more checks:
 
         ```yaml
         spec:
