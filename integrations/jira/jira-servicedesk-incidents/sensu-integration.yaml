@@ -21,49 +21,42 @@ spec:
       title: Jira Service Management Configuration
     - type: markdown
       body: |
-        This integration requires a Jira account and [Jira Service Management] project.
+        Provide these Jira Service Management configuration parameters:
 
-        * [Jira URL] (e.g. `https://mycompany.atlassian.net`)
-        * [Jira Project Key] (e.g. `OPS`)
-        * [Jira Issue Type] (e.g. `[System] Incident`)
-
-        Please provide these Jira configuration parameters below.
-
-        [Jira Service Management]: https://www.atlassian.com/software/jira/service-management/features/service-desk
-        [Jira URL]: https://confluence.atlassian.com/adminjiraserver/configuring-the-base-url-938847830.html
-        [Jira Project Key]: https://support.atlassian.com/jira-cloud-administration/docs/edit-a-projects-details/
-        [Jira Issue Type]: https://support.atlassian.com/jira-cloud-administration/docs/what-are-issue-types/
+        * Jira base URL (e.g. `https://mycompany.atlassian.net`)
+        * Jira Service Management project key (e.g. `OPS`)
+        * Jira Service Management issue type (e.g. `[System] Incident`)
     - type: question
       name: jira_url
       required: true
       input:
         type: string
-        title: Jira URL
-        description: Please provide the Jira site URL (e.g. https://yourcompany.atlassian.net)
+        title: Jira base URL
+        description: Enter the Jira site base URL
+        default: "https://mycompany.atlassian.net"
     - type: question
       name: jira_project_key
       required: true
       input:
         type: string
-        title: Jira Project Key
-        description: Please provide the Jira Project Key (e.g. "OPS")
+        title: Jira project key
+        description: Enter the Jira Service Management project key
+        default: "OPS"
     - type: question
       name: jira_issue_type
       required: true
       input:
         type: string
-        title: Jira Issue Type
-        description: Please provide the Jira Issue Type (e.g. "[System] Incident")
+        title: Jira issue type
+        description: Enter the Jira Service Management issue type
         default: "[System] Incident"
     - type: section
-      title: Jira Service Management Integration Authentication
+      title: Jira Service Management Authentication
     - type: markdown
       body: |
-        This integration requires a Jira Service Management API Token for Jira Service Management API Authentication.
+        Provide the Jira Service Management username and [API token].
 
-        Please visit the Jira Service Management knowledge base article ["Manage API Tokens for your Atlassian Account"] for more information.
-
-        ["Manage API Tokens for your Atlassian Account"]: https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
+        [API token]: https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
     - type: question
       name: jira_username
       required: true
@@ -77,17 +70,17 @@ spec:
             properties:
               option:
                 type: string
-                title: Jira Username
+                title: Jira username
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the Jira username
               secret:
                 type: string
-                title: Jira Username (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the Jira Username (Sensu Secret)
+                  Enter the secret name for the Jira username
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -96,17 +89,17 @@ spec:
             properties:
               option:
                 type: string
-                title: Jira Username
+                title: Jira username
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the Jira username as a backend environment variable
               env_var:
                 type: string
-                title: Jira Username
+                title: Jira username
                 description: >-
-                  Provide the Jira Username (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the Jira username (username will be stored in the Sensu API as unencrypted plaintext)
     - type: question
       name: jira_api_token
       required: true
@@ -120,17 +113,17 @@ spec:
             properties:
               option:
                 type: string
-                title: Jira API Token
+                title: Jira API token
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the Jira API token
               secret:
                 type: string
-                title: Jira API Token (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the Jira API Token (Sensu Secret)
+                  Enter the secret name for the Jira API token
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -139,17 +132,17 @@ spec:
             properties:
               option:
                 type: string
-                title: Jira API Token
+                title: Jira API token
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the Jira API token as a backend environment variable
               env_var:
                 type: string
-                title: Jira API Token
+                title: Jira API token
                 description: >-
-                  Provide the Jira API Token (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the Jira API token (token will be stored in the Sensu API as unencrypted plaintext)
   resource_patches:
     - resource:
         api_version: core/v2
@@ -186,9 +179,11 @@ spec:
       title: Success
     - type: markdown
       body: |
-        You have successfully enabled the "jira-servicedesk-incidents" pipeline.
+        You enabled the Jira Service Management integration.
 
-        Checks configured with the `elasticsearch` pipeline will send Sensu event and metric data to your Jira Service Management account.
+        For events from checks that reference the `jira-servicedesk-incidents` pipeline, Sensu will create incidents in `[[jira_url]]` with project key [[jira_project_key]] and issue type [[jira_issue_type]].
+
+        Add the `jira-servicedesk-incidents` pipeline reference to one or more checks:
 
         ```yaml
         spec:
