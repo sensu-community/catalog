@@ -7,7 +7,12 @@ to [Semantic Versioning][semver].
 
 ## Unreleased
 
-- *n/a*
+- Remove metrics pipeline option in configuration modal
+- Revise text labels and prompts in configuration modal
+- Add summary for success screen in integration yaml file
+- Add and revise setup steps and options in README
+- Revise reference documentation list in README
+
 
 ## [0.1.0] - 2022-05-03
 

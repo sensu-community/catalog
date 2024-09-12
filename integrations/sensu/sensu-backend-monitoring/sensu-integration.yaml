@@ -7,8 +7,8 @@ metadata:
 spec:
   class: supported # community, supported, enterprise, or partner
   provider: monitoring
-  display_name: "Sensu Backend Monitoring"
-  short_description: "Health checks for Sensu Backends"
+  display_name: Sensu Backend Monitoring
+  short_description: Check Sensu backend health
   supported_platforms:
     - darwin
     - linux
@@ -24,10 +24,12 @@ spec:
     - "@asachs01"
   prompts:
     - type: section
-      title: Configure Sensu Backend Postgres Health Monitoring
+      title: Sensu Backend Health Monitoring Configuration
     - type: markdown
       body: |
-        Configure Sensu Backend Health API monitoring
+        Specify the Sensu [backend API URL] and the interval for executing the `sensu-backend-postgresql-health` check (in seconds).
+
+        [backend API URL]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-schedule/backend/#backend-api-url-attribute
     - type: question
       name: url
       required: false
@@ -35,7 +37,7 @@ spec:
         type: string
         title: Sensu Backend URL
         description: >-
-          Please input the full path to your Sensu backend's `/health` endpoint (example: http://127.0.0.1:8080/health)
+          Enter the complete URL for your Sensu backend, including the `/health` endpoint
         format: url
         default: http://127.0.0.1:8080/health
     - type: question
@@ -45,13 +47,13 @@ spec:
         type: integer
         title: Interval
         description: >-
-          How often (in seconds) do you want to check the Sensu Enterprise datastore's health?
+          Specify the check interval, in seconds (60 = 1 minute, 300 = 5 minutes, 600 = 10 minutes)
         default: 30
     - type: section
-      title: Configure Sensu Subscriptions
+      title: Subscriptions
     - type: markdown
       body: |
-        Configure which Sensu Agent subscriptions this check should be run on.
+        Specify the subscriptions for Sensu agents that should execute the `sensu-backend-postgresql-health` check
     - type: question
       name: subscriptions
       input:
@@ -66,17 +68,17 @@ spec:
       title: Pipeline Configuration
     - type: markdown
       body: |
-        Configure one or more [pipelines] for processing {{integration_short_name}} data.
+        Name the [pipelines] you want to use to process Sensu Backend Monitoring integration data.
 
-        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/
+        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/pipelines/
     - type: question
       name: alert_pipeline
       required: false
       input:
         type: string
-        title: Alert Pipeline
+        title: Alert pipeline name
         description: >-
-          How do you want to be alerted for failures detected by this pipeline (e.g. Slack or Microsoft Teams)?
+          Which pipeline do you want to use for alerts due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "alerts"
     - type: question
@@ -84,21 +86,11 @@ spec:
       required: false
       input:
         type: string
-        title: Incident Management Pipeline
+        title: Incident pipeline name
         description: >-
-          How do you want to process incidents for failures detected by this pipeline (e.g. Atlassian JIRA/ServiceDesk, or Pagerduty)?
+          Which pipeline do you want to use to process incidents due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "incidents"
-    - type: question
-      name: metrics_pipeline
-      required: false
-      input:
-        type: string
-        title: Metrics Pipeline
-        description: >-
-          How do you want to process metrics collected by this integration?
-        ref: core/v2/pipeline/metadata/name
-        refFilter: .labels.provider == "metrics"
   resource_patches:
     - resource:
         api_version: core/v2
@@ -120,12 +112,6 @@ spec:
           value:
             api_version: "core/v2"
             type: "Pipeline"
-            name: "[[metrics_pipeline]]"
-        - op: add
-          path: /spec/pipelines/-
-          value:
-            api_version: "core/v2"
-            type: "Pipeline"
             name: "[[alert_pipeline]]"
         - op: add
           path: /spec/pipelines/-
@@ -136,4 +122,11 @@ spec:
         - op: replace
           path: /spec/subscriptions
           value: subscriptions
+  post_install:
+    - type: section
+      title: Success
+    - type: markdown
+      body: |
+        You enabled the Sensu Backend Monitoring integration.
 
+        The `sensu-backend-postgresql-health` check will run for the Sensu backend with API URL [[ url ]].
