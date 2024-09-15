@@ -7,7 +7,13 @@ to [Semantic Versioning][semver].
 
 ## Unreleased
 
-- N/A
+- Remove linux and darwin tags in integration yaml
+- Revise text labels and prompts in configuration modal
+- Add summary for success screen in integration yaml file
+- Restore separate Alerts section in README
+- Add and revise setup steps and options in README
+- Revise reference documentation list in README
+
 
 ## [ 20220421.0.0 ] - 2022-04-21
 
