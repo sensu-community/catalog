@@ -8,7 +8,7 @@ spec:
   class: supported
   provider: monitoring
   display_name: AWS RDS Monitoring
-  short_description: Collect AWS RDS metrics
+  short_description: Collect AWS Relational Database Service (RDS) metrics
   supported_platforms:
     - darwin
     - linux
@@ -24,24 +24,22 @@ spec:
       title: AWS Configuration
     - type: markdown
       body: |
-        Please provide the following configuration parameters:
+        Provide these AWS configuration parameters:
 
-        * AWS Region
-        * AWS Authentication (optional)<sup>*</sup>
-          * AWS Profile (optional)
-          * AWS Access Key ID (optional)
-          * AWS Secret Access Key (optional)
+        * AWS region
+        * AWS credential profile **OR** AWS access key ID + AWS secret access key
 
-        _NOTE: Providing an AWS Profile and/or AWS Access Key ID + AWS Secret Access Key authentication is strongly discouraged for production environments.
-        An alternative form of AWS Authentication such as EC2 IAM Instance Profiles is recommended._
+        Do not provide an AWS credential profile, access key ID, or secret access key in production environments. We suggest an alternative form of AWS authentication, such as EC2 IAM instance profiles.
+
+        If the check from this integration will run on a Sensu agent installed on an EC2 instance whose EC2 IAM instance profile contains `arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess`, you do not need to provide an AWS credential profile, access key ID, or secret access key.
     - type: question
       name: aws_region
       required: true
       input:
         type: string
-        title: AWS Region
+        title: AWS region
         description: >-
-          Select an AWS Region
+          Select an AWS region
         enum:
           - us-east-1
           - us-east-2
@@ -79,12 +77,10 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Profile
+                title: AWS credential profile name
                 const: none
                 constLocale:
-                  title: None
-                  description: >-
-                    Select this option to rely on pre-provisioned profile
+                  title: "-"
           - type: object
             required:
               - option
@@ -92,17 +88,17 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Profile
+                title: AWS credential profile name
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the profile name
               secret:
                 type: string
-                title: AWS Profile (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the AWS Profile (Sensu Secret)
+                  Enter the secret name for the AWS credential profile name
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -111,17 +107,17 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Profile
+                title: AWS credential profile name
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the AWS credential profile name as a backend environment variable
               env_var:
                 type: string
-                title: AWS Profile
+                title: AWS credential profile name
                 description: >-
-                  Provide the AWS Profile (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the AWS credential profile name (name will be stored in the Sensu API as unencrypted plaintext)
     - type: question
       name: aws_access_key_id
       input:
@@ -133,12 +129,10 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Access Key ID
+                title: AWS access key ID
                 const: none
                 constLocale:
-                  title: None
-                  description: >-
-                    Select this option to rely on pre-provisioned access key
+                  title: "-"
           - type: object
             required:
               - option
@@ -146,17 +140,17 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Access Key ID
+                title: AWS access key ID
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the AWS access key ID
               secret:
                 type: string
-                title: AWS Access Key ID (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the AWS Access Key ID (Sensu Secret)
+                  Enter the secret name for the AWS access key ID
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -165,17 +159,17 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Access Key ID
+                title: AWS access key ID
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the AWS access key ID as a backend environment variable
               env_var:
                 type: string
-                title: AWS Access Key ID
+                title: AWS access key ID
                 description: >-
-                  Provide the AWS Access Key ID (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the AWS access key ID (ID will be stored in the Sensu API as unencrypted plaintext)
     - type: question
       name: aws_secret_access_key
       input:
@@ -187,12 +181,10 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Secret Access Key
+                title: AWS secret access key
                 const: none
                 constLocale:
-                  title: None
-                  description: >-
-                    Select this option to rely on pre-provisioned secret access key
+                  title: "-"
           - type: object
             required:
               - option
@@ -200,17 +192,17 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Secret Access Key
+                title: AWS secret access key
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the AWS secret access key
               secret:
                 type: string
-                title: AWS Secret Access Key (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the AWS Secret Access Key (Sensu Secret)
+                  Enter the secret name for the AWS secret access key
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -219,73 +211,69 @@ spec:
             properties:
               option:
                 type: string
-                title: AWS Secret Access Key
+                title: AWS secret access key
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the AWS secret access key as a backend environment variable
               env_var:
                 type: string
-                title: AWS Secret Access Key
+                title: AWS secret access key
                 description: >-
-                  Provide the AWS Secret Access Key (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the AWS secret access key (key will be stored in the Sensu API as unencrypted plaintext)
     - type: section
-      title: Configure Thresholds
+      title: Alerting Thresholds
     - type: markdown
       body: |
-        Configure alerting thresholds for:
-
-        * Maximum errors
-        * Maximum tolerable throttle events
-        * Maximum tolerable DeadLetterErrors
+        Add alerting thresholds for maximum CPU utilization
     - type: question
       name: aws_rds_cpu_utilization_warning
       input:
         type: integer
-        title: Warning CPU Utilization
+        title: CPU utilization warning
         description: >-
-          Configure the percent of CPU Utilization over which to warning alert.
+          Enter the CPU utilization percentage that should trigger a WARNING alert (default is 80)
         default: 80
     - type: question
       name: aws_rds_cpu_utilization_critical
       input:
         type: integer
-        title: Critical CPU Utilization
+        title: CPU utilization critical
         description: >-
-          Configure the percent of CPU Utilization over which to critical alert.
+          Enter the CPU utilization percentage that should trigger a CRITICAL alert (default is 90)
         default: 90
     - type: section
-      title: Configure Sensu Subscriptions
+      title: Sensu Subscriptions
     - type: markdown
       body: |
-        Configure which Sensu Agent subscriptions this check should be run on.
+        Specify the subscriptions for Sensu agents that should execute the `aws-[[aws_region]]-rds-metrics` check
     - type: question
       name: subscriptions
       input:
         type: array
         items:
           type: string
-          title: Sensu Subscriptions
+          title: Sensu subscriptions
           ref: core/v2/entity/subscriptions
         default:
           - aws
           - aws/rds
     - type: section
-      title: Pipeline Configuration
+      title: Pipeline Configurations
     - type: markdown
       body: |
-        Configure one or more [pipelines] for processing AWS RDS data.
+        Name the [pipelines] you want to use to process AWS ALB Monitoring integration data.
 
-        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/
+        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/pipelines/
     - type: question
       name: alert_pipeline
       required: false
       input:
         type: string
-        title: Alert Pipeline
+        title: Alert pipeline name
         description: >-
-          How do you want to be alerted for failures detected by this pipeline (e.g. Slack or Microsoft Teams)?
+          Which pipeline do you want to use for alerts due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "alerts"
     - type: question
@@ -293,9 +281,9 @@ spec:
       required: false
       input:
         type: string
-        title: Incident Management Pipeline
+        title: Incident management pipeline name
         description: >-
-          How do you want to process incidents for failures detected by this pipeline (e.g. Atlassian JIRA/ServiceDesk, or Pagerduty)?
+          Which pipeline do you want to use to process incidents due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "incidents"
     - type: question
@@ -303,9 +291,9 @@ spec:
       required: false
       input:
         type: string
-        title: Metrics Pipeline
+        title: Metrics pipeline name
         description: >-
-          How do you want to process metrics collected by this integration?
+          Which pipeline do you want to use to process the metrics this integration collects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "metrics"
   resource_patches:
@@ -387,4 +375,6 @@ spec:
       title: Success
     - type: markdown
       body: |
-        The AWS RDS monitoring integration was successfully installed for the `[[aws_region]]` AWS Region.
+        You enabled the AWS ALB Monitoring integration for the `[[aws_region]]` AWS region.
+
+        The `aws-[[aws_region]]-rds-metrics` check will run for all Sensu agents with these subscriptions: [[subscriptions]].
