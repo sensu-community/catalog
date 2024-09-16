@@ -8,7 +8,7 @@ spec:
   class: community
   provider: monitoring
   display_name: Caddy Metrics
-  short_description: Collect metrics from Caddy HTTP Server in Prometheus format
+  short_description: Collect metrics from Caddy server in Prometheus format
   supported_platforms:
     - darwin
     - linux
@@ -17,33 +17,30 @@ spec:
     - metrics
     - prometheus
     - caddy
-    - linux
-    - darwin
-    - windows
   contributors:
     - "@sensu"
     - "@thoward"
   prompts:
     - type: section
-      title: Caddy Metrics HTTP Endpoint Configuration
+      title: Caddy HTTP Endpoint Configuration
     - type: markdown
       body: |
-        Configure Caddy metrics HTTP endpoint with the following parameters:
+        Provide these configuration parameters for the Caddy `/metrics` HTTP endpoint:
 
-        * **URL**: the target URL to collect metrics from (e.g. `https://localhost:2019/metrics`)
-          * **Protocol**: select http or https request
-          * **Host**: provide a hostname, IP address, or domain name
-          * **Port**: provide the port to check (e.g. `2019` for HTTP, `443` for HTTPS)
-          * **Path**: provide the URL path to check (e.g. `/metrics`)
-        * **Interval**: how often to monitor the metrics endpoint (in seconds)
+        * Target URL to collect metrics from, such as `https://127.0.0.1:443/metrics`, separated into:
+          * Protocol (`http` or `https`)
+          * Host (hostname, IP address, or domain name)
+          * Port number
+          * Path (e.g. `/metrics`)
+        * Interval for collecting metrics from the endpoint (in seconds)
     - type: question
       name: protocol
       required: true
       input:
         type: string
-        title: HTTP Endpoint Protocol
+        title: Target URL protocol
         description: >-
-          Provide the HTTP endpoint protocol (i.e. "http" or "https").
+          Select the protocol for the Caddy target URL (`http` or `https`)
         enum:
           - http
           - https
@@ -53,27 +50,27 @@ spec:
       required: true
       input:
         type: string
-        title: HTTP Endpoint Host
+        title: Target URL host
         description: >-
-          Provide the HTTP endpoint host (e.g. "127.0.0.1")
+          Enter the host for the Caddy target URL
         default: 127.0.0.1
     - type: question
       name: port
       required: true
       input:
         type: integer
-        title: HTTP Endpoint Port
+        title: Target URL port
         description: >-
-          Provide the HTTP endpoint port (e.g. 2019 is the default for Caddy)
+          Enter the port for the Caddy target URL (Caddy default is `2019`)
         default: 2019
     - type: question
       name: path
       required: true
       input:
         type: string
-        title: HTTP Endpoint Path
+        title: Target URL path
         description: >-
-          Provide the HTTP endpoint path (e.g. "/metrics"; NOTE: this configuration MUST begin with a "/")
+          Enter the path for the Caddy target URL (MUST begin with `/`)
         default: "/metrics"
     - type: question
       name: interval
@@ -81,24 +78,13 @@ spec:
         type: integer
         title: Interval
         description: >-
-          Configure the metrics endpoint monitoring interval, in seconds (60 = one minute, 300 = five minutes, 600 = 10 minutes, etc)
+          Specify the metrics collection interval, in seconds (60 = 1 minute, 300 = 5 minutes, 600 = 10 minutes)
         default: 30
-    - type: question
-      name: labels
-      input:
-        type: object
-        title: Labels
-        description: Key/value metadata
-        format: io.sensu.meta.label
-        additionalProperties:
-          type: string
     - type: section
-      title: Configure Sensu Subscriptions
+      title: Sensu Subscriptions and Check Labels
     - type: markdown
       body: |
-        Configure which Sensu Agent subscriptions this check should be run on.
-
-        E.G. A subscription that maps to the hosts that are running Caddy.
+        Specify the subscriptions for Sensu agents that should execute the `caddy-metrics` check and the metadata labels to add to the check definition.
     - type: question
       name: subscriptions
       input:
@@ -109,24 +95,32 @@ spec:
           ref: core/v2/entity/subscriptions
         default:
           - caddy
+    - type: question
+      name: labels
+      input:
+        type: object
+        title: Check labels
+        description: Add metadata labels for the `caddy-metrics` check
+        format: io.sensu.meta.label
+        additionalProperties:
+          type: string
     - type: section
       title: Pipeline Configuration
     - type: markdown
       body: |
-        Configure one or more [pipelines] for processing Caddy metrics.
+        Name the [pipelines] you want to use to process Caddy Metrics integration data.
 
-        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/
+        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/pipelines/
     - type: question
       name: metrics_pipeline
       required: false
       input:
         type: string
-        title: Metrics Pipeline
+        title: Metrics pipeline name
         description: >-
-          How do you want to process metrics collected by this integration?
+          Which pipeline do you want to use to process the metrics this integration collects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "metrics"
-        default: metrics
   resource_patches:
     - resource:
         api_version: core/v2
@@ -143,6 +137,9 @@ spec:
             --timeout 10
             --url "[[protocol]]://[[host]]:[[port]][[path]]"
         - op: replace
+          path: /spec/interval
+          value: interval
+        - op: replace
           path: /spec/subscriptions
           value: subscriptions
         - op: add
@@ -156,4 +153,11 @@ spec:
             api_version: core/v2
             type: Pipeline
             name: "[[metrics_pipeline]]"
+  post_install:
+    - type: section
+      title: Success
+    - type: markdown
+      body: |
+        You enabled the Caddy Metrics integration for `[[protocol]]://[[host]]:[[port]][[path]]`.
 
+        The `caddy-metrics` check will run for all Sensu agents with these subscriptions: [[subscriptions]].
