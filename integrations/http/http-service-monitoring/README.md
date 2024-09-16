@@ -2,14 +2,14 @@
 
 <!-- Sensu Integration description; supports markdown -->
 
-The HTTP Service monitoring integration provides healthchecks and performance monitoring for local HTTP services (e.g. a service running on a host or pod where an agent is deployed).
+The HTTP Service Monitoring (Local) integration provides healthchecks and performance monitoring for local HTTP services (e.g. a service running on a host or pod where an agent is deployed).
 
 <!-- Provide a high level overview of the integration contents (e.g. checks, filters, mutators, handlers, assets, etc) -->
 
-This integration includes the following resources:
+This integration includes the following Sensu resources:
 
-* `http-endpoint-monitoring` [check]
-* `http-endpoint-metrics` [check]
+* `{SERVICE_NAME}-http-service-monitoring` [check]
+* `{SERVICE_NAME}-http-service-metrics` [check]
 * `sensu/http-checks:0.5.0` [asset]
 
 ## Dashboards
@@ -20,18 +20,31 @@ This integration includes the following resources:
 
 <!-- ![](img/dashboard.png) -->
 
-There are no compatible dashboards for this integration.
+The HTTP Service Monitoring (Local) integration does not have compatible dashboards.
 
 ## Setup
 
 <!-- Sensu Integration setup instructions, including Sensu agent configuration and external component configuration -->
 <!-- EXAMPLE: what configuration (if any) is required in a third-party service to enable monitoring? -->
 
-1. **[OPTIONAL] Disable redirect warnings**
+1. Get the local service URL. You will need these service URL elements to install this integration:
 
-   To disable redirect warnings, install this integration, then modify the resulting Sensu Check resource with the `--redirect-ok` flag.
+   - Protocol (`http` or `https`)
+   - Host (hostname, IP address, or domain name)
+   - Port number (e.g. `8080` for http or `443` for http)
+   - Path (e.g. `/healthz`)
 
-   Example:
+1. Decide which Sensu agents should execute the `{SERVICE_NAME}-http-service-healthcheck` and `{SERVICE_NAME}-http-service-metrics` checks. You will need the agent [subscription] names when you install this integration.
+
+1. If you want to use a Sensu [pipeline] to process HTTP Service Monitoring (Local) integration data, you will need the pipeline names when you install this integration.
+
+   You can configure separate pipelines for alerts, metrics, and incident management.
+
+1. **Optional** Disable redirect warnings.
+
+   To disable redirect warnings, install this integration. Then, update the `{SERVICE_NAME}-http-service-healthcheck` and `{SERVICE_NAME}-http-service-metrics` checks to add the `--redirect-ok` flag in the `command` attributes.
+
+   <details><summary><strong>Example: Check command with disabled redirect warnings</strong></summary>
 
    ```yaml
    spec:
@@ -42,21 +55,31 @@ There are no compatible dashboards for this integration.
        --url "http://127.0.0.1:8080/health"
    ```
 
-2. **[OPTIONAL] Configure custom request headers**
+   **NOTE**: The `{SERVICE_NAME}-http-service-healthcheck` check uses the `http-check` command as shown in the example. In the `{SERVICE_NAME}-http-service-metrics` check, the command uses `http-perf` instead.
 
-   To add custom request headers, install this integration, then modify the resulting Sensu Check resource with one or more `--header` flags.
+   </details>
+   <br>
 
-   Example:
+1. **Optional** Configure custom request headers.
+
+   To use custom request headers, install this integration. Then, update the `{SERVICE_NAME}-http-service-healthcheck` and `{SERVICE_NAME}-http-service-metrics` checks to add one or more `--header` flags in the `command` attributes.
+
+   <details><summary><strong>Example: Custom request header configuration</strong></summary>
 
    ```yaml
    spec:
      command: >-
        http-check
        --timeout 10
-       --url "http://127.0.0.1:8080/health
+       --url "http://127.0.0.1:8080/health"
        --header "Content-Type: application/json"
        --header "X-Example-Header: helloworld"
    ```
+
+   **NOTE**: The `{SERVICE_NAME}-http-service-healthcheck` check uses the `http-check` command as shown in the example. In the `{SERVICE_NAME}-http-service-metrics` check, the command uses `http-perf` instead.
+
+   </details>
+   <br>
 
 ## Plugins
 
@@ -64,41 +87,40 @@ There are no compatible dashboards for this integration.
 
 - [sensu/http-checks][http-checks-bonsai] ([GitHub][http-checks-github])
 
-## Metrics & Events
-
-<!-- List of all metrics or events collected by this integration. -->
-
-This integration collects the following [metrics]:
-
-| **Metric name** | **Description** | **Tags** |
-|-----------------|-----------------|----------|
-| `dns_duration` | Time to DNS resolution | `url` |
-| `tls_handshake_duration` | Time to TLS handshake | `url` |
-| `connect_duration` | Time to fetch HTTP contents | `url` |
-| `first_byte_duration` | Time to fetch first byte of HTTP content | `url` |
-| `total_request_duration` | Total time to complete request | `url` |
-
 ## Alerts
 
 <!-- List of all alerts generated by this integration. -->
 
-This integration produces the following events which should be processed by an alert or incident management [pipeline]:
+The HTTP Service Monitoring (Local) integration produces the following events that should be processed by an alert or incident management [pipeline]:
 
-* Request duration warning
+**Request duration warning**
 
-  Generates a warning if the `total_request_duration` exceeds the configured threshold (default: 1.0 seconds).
+Generates a WARNING event if the `total_request_duration` exceeds the user-configured threshold, in seconds (default 1).
 
-* Redirect warnings
+**Redirect warning**
 
-  Generates a warning for HTTP 3xx response codes (e.g. `WARNING: HTTP Status 301 for https://sumologic.com:443/  (redirects to https://www.sumologic.com:443/)`)
+Generates a WARNING event for HTTP 3xx response codes such as `WARNING: HTTP Status 301 for https://127.0.0.1:8080/health (redirects to http://127.0.0.1:8080/health)`.
 
-  <!-- Description of the alert condition. -->
+## Metrics
+
+<!-- List of all metrics or events collected by this integration. -->
+
+The HTTP Service Monitoring (Local) integration collects the following [metrics]:
+
+Metric name | Description | Tags
+----------- | ----------- | ----
+`dns_duration` | Time to DNS resolution | `url`
+`tls_handshake_duration` | Time to TLS handshake | `url`
+`connect_duration` | Time to fetch HTTP contents | `url`
+`first_byte_duration` | Time to fetch first byte of HTTP content | `url`
+`total_request_duration` | Total time to complete request | `url`
 
 ## Reference Documentation
 
 <!-- Please provide links to any relevant reference documentation to help users learn more and/or troubleshoot this integration; specifically including any third-party software documentation. -->
 
-1. This integration uses [Sensu Tokens][tokens] for variable substitution.
+* [Token substitution] (Sensu documentation): the HTTP Endpoint Monitoring (Remote) integration supports Sensu tokens for variable substitution with data from Sensu entities
+
 
 <!-- Links -->
 [entity]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-entities/entities/
@@ -114,7 +136,7 @@ This integration produces the following events which should be processed by an a
 [pipeline]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/pipelines/
 [secret]: https://docs.sensu.io/sensu-go/latest/operations/manage-secrets/secrets/
 [secrets]: https://docs.sensu.io/sensu-go/latest/operations/manage-secrets/secrets/
-[tokens]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-schedule/tokens/
+[Token substitution]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-schedule/tokens/
 [sensu-plus]: https://sensu.io/features/analytics
 [http-checks-bonsai]: https://bonsai.sensu.io/assets/sensu/http-checks
 [http-checks-github]: https://github.com/sensu/http-checks
