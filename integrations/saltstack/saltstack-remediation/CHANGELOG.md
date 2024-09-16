@@ -7,7 +7,13 @@ to [Semantic Versioning][semver].
 
 ## Unreleased
 
-- N/A
+- Update display_name to SaltStack Remediation (from SaltStack) to match GitHub
+- Remove `none` option for API username and password in integration yaml
+- Revise text labels and prompts in configuration modal
+- Add pipeline reference setup step and example in README
+- List and describe options for `sensu.io/plugins/sensu-saltstack-handler/config/actions` annotation in README
+- Update README link references to match headings on the linked pages
+- Revise list of reference documentation in README
 
 ## [ 20220505.0.0 ] - 2022-05-05
 
