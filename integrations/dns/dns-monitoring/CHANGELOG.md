@@ -7,7 +7,14 @@ to [Semantic Versioning][semver].
 
 ## Unreleased
 
-- N/A
+- Revise text labels and prompts in configuration modal
+- Updated check condition configuration options in integration yaml
+- Add to summary in integration yaml
+- Restore code-commented instructions in README
+- Remove round robin link in README
+- Add several setup steps and options in README
+- Update README link references to match headings on the linked pages
+- Update reference documentation list
 
 ## [ 20220421.0.0 ] - 2022-04-21
 

@@ -18,100 +18,106 @@ spec:
     - "@c-kruse"
   prompts:
     - type: section
-      title: DNS Record Check
+      title: DNS Query Configuration
     - type: markdown
       body: |
-        Configure your DNS Query with the following configuration parameters:
+        Provide these configuration parameters for the DNS query:
 
-        * Domain (domain name to query)
-        * Record Type (record type to query)
-        * Record Class (record class to query)
-        * Servers (comma-delimited list of name servers to query)
-        * Port (DNS server port to query)
-
+        * Domain name
+        * Record type
+        * Record class
+        * Name servers
+        * DNS server port
     - type: question
       name: domain
       required: true
       input:
         default: sensu.io
         type: string
-        title: Domain
+        title: Domain name
         description: >-
-          Domain name to query.
+          Domain name to query
     - type: question
       name: record_type
       required: true
       input:
         default: A
         type: string
-        title: Record Type
+        title: Record type
         description: >-
-          Record type to query (default is "A").
+          Record type to query (default is `A`)
     - type: question
       name: record_class
       required: true
       input:
         default: IN
         type: string
-        title: Record Class
+        title: Record class
         description: >-
-          Record class to query (default is "IN").
+          Record class to query (default is `IN`)
     - type: question
       name: servers
       required: true
       input:
         default: 1.1.1.1
         type: string
-        title: Name Servers
+        title: Name servers
         description: >-
-          Provide a comma-delimited list of default name server(s) to query. NOTE: this may be overriden with agent configuration on a per-host basis.
+          Comma-delimited list of name servers to query
     - type: question
       name: port
       required: true
       input:
         default: 53
         type: integer
-        title: DNS Server Port
+        title: DNS server port
         description: >-
-          Configure the default DNS server port to query (default is 53). NOTE: this may be overriden with agent configuration on a per-host basis.
+          DNS server port to query (default is `53`)
     - type: section
-      title: Check Conditions
+      title: Event statuses
     - type: markdown
       body: |
-        Configure Sensu check error codes and conditions.
+        Configure statuses for the events generated when DNS records cannot be resolved or when DNSSEC is not configured.
+
+        0 = OK, 1 = WARNING, 2 = CRITICAL
     - type: question
       name: record_not_resolved_exit_code
       required: true
       input:
-        default: 2
         type: integer
-        title: DNS Record Not Resolved Event Status
+        title: DNS record not resolved
         description: >-
-          The event status to use when the record can not be resolved (0 = OK, 1 = Warning, 2 = Critical)
+          Select the event status to use when the DNS record cannot be resolved
+        enum:
+          - 0
+          - 1
+          - 2
+        default: 2
     - type: question
       name: dnssec_not_configured_exit_code
+      required: true
       input:
         type: integer
-        title: DNSSEC Not Configured Event Status
+        title: DNSSEC not configured
         description: >-
-          The event status to use when the Nameserver indicates that DNSSEC was not checked or verified (0 = OK, 1 = Warning, 2 = Critical)
+          Select the event status to use when the name server indicates that DNSSEC is not configured
         enum:
           - 0
           - 1
           - 2
         default: 1
     - type: section
-      title: Configure Sensu Subscriptions
+      title: Sensu Subscriptions
     - type: markdown
       body: |
-        Configure which Sensu Agent subscriptions this check should be run on.
+        Specify the subscriptions for Sensu agents that should execute the `{DOMAIN_NAME}-{RECORD_TYPE}-dns-monitoring` check
     - type: question
       name: subscriptions
       input:
         type: array
         items:
           type: string
-          title: Sensu Subscriptions
+          title: Subscriptions
           ref: core/v2/entity/subscriptions
         default:
           - dns
@@ -119,17 +125,17 @@ spec:
       title: Pipeline Configuration
     - type: markdown
       body: |
-        Configure one or more [pipelines] for processing DNS monitoring data.
+        Name the [pipelines] you want to use to process DNS Monitoring integration data.
 
-        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/
+        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/pipelines/
     - type: question
       name: alert_pipeline
       required: false
       input:
         type: string
-        title: Alert Pipeline
+        title: Alert pipeline name
         description: >-
-          How do you want to be alerted for failures detected by this pipeline (e.g. Slack or Microsoft Teams)?
+          Which pipeline do you want to use for alerts due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "alerts"
     - type: question
@@ -137,9 +143,9 @@ spec:
       required: false
       input:
         type: string
-        title: Incident Management Pipeline
+        title: Incident pipeline name
         description: >-
-          How do you want to process incidents for failures detected by this pipeline (e.g. Atlassian JIRA/ServiceDesk, or Pagerduty)?
+          Which pipeline do you want to use to process incidents due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "incidents"
     - type: question
@@ -147,9 +153,9 @@ spec:
       required: false
       input:
         type: string
-        title: Metrics Pipeline
+        title: Metrics pipeline name
         description: >-
-          How do you want to process metrics collected by this integration?
+          Which pipeline do you want to use to process the metrics this integration collects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "metrics"
   resource_patches:
@@ -211,4 +217,6 @@ spec:
       title: Success
     - type: markdown
       body: |
-        You have successfully enabled [[domain]] [[record_type]] DNS record monitoring.
+        You enabled the DNS Monitoring integration for [[domain]] port [[port]], record type [[record_type]], and record class [[record_class]].
+
+        The `[[domain]]-[[record_type]]-dns-monitoring` check will run for all Sensu agents with these subscriptions: [[subscriptions]].
