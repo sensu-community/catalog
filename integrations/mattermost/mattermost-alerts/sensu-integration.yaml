@@ -8,7 +8,7 @@ spec:
   class: supported
   provider: alerts
   display_name: Mattermost
-  short_description: Send alerts via Mattermost
+  short_description: Send alerts to a Mattermost channel
   tags:
     - mattermost
     - alerts
@@ -21,12 +21,10 @@ spec:
       title: Mattermost Configuration
     - type: markdown
       body: |
-        This integration requires a Mattermost Webhook URL for Mattermost API Authentication, and a default alerting channel.
+        Specify the Mattermost [webhook URL] and the [channel] that should receive alerts.
 
-        Please visit [Mattermost Incoming Webhook] and [Mattermost Channels] documentation for more information.
-
-        [Mattermost Incoming Webhook]: https://docs.mattermost.com/developer/webhooks-incoming.html
-        [Mattermost Channels]: https://docs.mattermost.com/guides/channels.html
+        [webhook URL]: https://docs.mattermost.com/developer/webhooks-incoming.html
+        [channel]: https://docs.mattermost.com/guides/channels.html
     - type: question
       name: mattermost_webhook_url
       required: true
@@ -40,17 +38,17 @@ spec:
             properties:
               option:
                 type: string
-                title: Mattermost Webhook URL
+                title: Mattermost webhook URL
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the Mattermost webhook URL
               secret:
                 type: string
-                title: Mattermost Webhook URL (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the Mattermost Webhook URL (Sensu Secret)
+                  Enter the secret name for the Mattermost webhook URL
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -59,25 +57,25 @@ spec:
             properties:
               option:
                 type: string
-                title: Mattermost Webhook URL
+                title: Mattermost webhook URL
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the Mattermost webhook URL as a backend environment variable
               env_var:
                 type: string
-                title: Mattermost Webhook URL
+                title: Mattermost webhook URL
                 description: >-
-                  Provide the Mattermost Webhook URL (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the Mattermost webhook URL (URL will be stored in the Sensu API as unencrypted plaintext)
     - type: question
       name: mattermost_channel
       required: true
       input:
         type: string
-        title: Mattermost Channel
+        title: Mattermost channel
         description: >-
-          Mattermost Channel (e.g. #alerts)
+          Enter the name of the Mattermost channel that should receive alerts
         default: "#alerts"
   resource_patches:
     - resource:
@@ -101,9 +99,11 @@ spec:
       title: Success
     - type: markdown
       body: |
-        You have successfully enabled the Mattermost alerts integration.
+        You enabled the Mattermost integration.
 
-        Checks configured with the `mattermost` pipeline will generate alerts in the `[[mattermost_channel]]` channel.
+        Sensu will forward events from checks that reference the `mattermost` pipeline to `[[mattermost_channel]]`.
+
+        Add the `mattermost` pipeline reference to one or more checks:
 
         ```yaml
         spec:
