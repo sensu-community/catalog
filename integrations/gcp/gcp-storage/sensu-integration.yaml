@@ -8,7 +8,7 @@ spec:
   class: supported
   provider: monitoring
   display_name: GCP Storage Monitoring
-  short_description: Collect GCP Storage metrics
+  short_description: Collect Google Cloud Storage metrics and get request rate alerts
   supported_platforms:
     - darwin
     - linux
@@ -22,25 +22,22 @@ spec:
     - "@sensu"
   prompts:
     - type: section
-      title: Required GCP Configuration
+      title: Google Cloud Configuration
     - type: markdown
       body: |
-        Please provide the following configuration parameters:
+        Provide these configuration parameters:
 
-        * GCP Project ID
-        * GCP Authentication token (oneof:
-          * JSON string
-          * Secret reference to JSON string
-          * Pre-provisioned token
-        * Data collection timespan in minutes  
+        * Google Cloud Storage project ID
+        * Google Cloud service account key
+        * Data collection timespan
     - type: question
       name: project_id
       required: true
       input:
         type: string
-        title: GCP Project ID
+        title: Google Cloud Storage project ID
         description: >-
-          Configure the required GCP Project ID.
+          Enter the Google Cloud Storage project ID
     - type: question
       name: gcp_authentication_token
       input:
@@ -49,33 +46,21 @@ spec:
           - type: object
             required:
               - option
-            properties:
-              option:
-                type: string
-                title: GCP Authentication Token
-                const: none
-                constLocale:
-                  title: None
-                  description: >-
-                    Select this option to rely on pre-provisioned authentication token
-          - type: object
-            required:
-              - option
               - secret
             properties:
               option:
                 type: string
-                title: GCP Authentication Token
+                title: Google Cloud service account key format
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the service account key
               secret:
                 type: string
-                title: GCP Authentication Token (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the GCP Authentication Token (Sensu Secret)
+                  Enter the secret name for the Google Cloud service account key
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -84,45 +69,43 @@ spec:
             properties:
               option:
                 type: string
-                title: GCP Authentication Token
+                title: Google Cloud service account key format
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the service account key as a backend environment variable
               env_var:
                 type: string
-                title: GCP Authentication Token
+                title: Google Cloud service account key
                 description: >-
-                  Provide the GCP Authentication Token (NOTE: this will be stored in the Sensu API as unencrypted plaintext.
+                  Enter the Google Cloud service account key (key will be stored in the Sensu API as unencrypted plaintext)
     - type: question
       name: period_minutes
       input:
         type: integer
-        title: Collection timespan in minutes
+        title: Collection timespan (in minutes)
         description: >-
-          Configure the number of previous minutes to request metrics.
+          Previous period to consider for metrics statistic calculation, in minutes (default is 1)
         default: 1
     - type: section
-      title: Configure Thresholds
+      title: Alerting Thresholds
     - type: markdown
       body: |
-        Configure alerting thresholds for:
-
-        * Maximum Invalid Argument Request Rate
+        Add an alerting threshold for maximum invalid request rate.
     - type: question
       name: invalid_request_rate
       input:
         type: string
-        title: Maximum allowed errors
+        title: Maximum invalid request rate
         description: >-
-          Configure the error rate over which to warn.
+          Enter the invalid request rate that should trigger a WARNING alert (default is 1.0)
         default: "1.0"
     - type: section
-      title: Configure Sensu Subscriptions
+      title: Sensu Subscriptions
     - type: markdown
       body: |
-        Configure which Sensu Agent subscriptions this check should be run on.
+        Specify the subscriptions for Sensu agents that should execute the `gcp-[[project_id]]-storage-metrics` check
     - type: question
       name: subscriptions
       input:
@@ -138,17 +121,17 @@ spec:
       title: Pipeline Configuration
     - type: markdown
       body: |
-        Configure one or more [pipelines] for processing GCP Storage data.
+        Name the [pipelines] you want to use to process GCP Storage Monitoring integration data.
 
-        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/
+        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/pipelines/
     - type: question
       name: alert_pipeline
       required: false
       input:
         type: string
-        title: Alert Pipeline
+        title: Alert pipeline name
         description: >-
-          How do you want to be alerted for failures detected by this pipeline (e.g. Slack or Microsoft Teams)?
+          Which pipeline do you want to use for alerts due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "alerts"
     - type: question
@@ -156,9 +139,9 @@ spec:
       required: false
       input:
         type: string
-        title: Incident Management Pipeline
+        title: Incident management pipeline name
         description: >-
-          How do you want to process incidents for failures detected by this pipeline (e.g. Atlassian JIRA/ServiceDesk, or Pagerduty)?
+          Which pipeline do you want to use to process incidents due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "incidents"
     - type: question
@@ -166,9 +149,9 @@ spec:
       required: false
       input:
         type: string
-        title: Metrics Pipeline
+        title: Metrics pipeline name
         description: >-
-          How do you want to process metrics collected by this integration?
+          Which pipeline do you want to use to process the metrics this integration collects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "metrics"
   resource_patches:
@@ -234,4 +217,6 @@ spec:
       title: Success
     - type: markdown
       body: |
-        The GCP Storage monitoring integration was successfully installed for the project: `[[project_id]]`.
+        You enabled the GCP Storage Monitoring integration for the project `[[project_id]]`.
+
+        The `gcp-[[project_id]]-storage-metrics` check will run for all Sensu agents with these subscriptions: [[subscriptions]].

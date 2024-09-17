@@ -7,7 +7,11 @@ to [Semantic Versioning][semver].
 
 ## Unreleased
 
-- *n/a*
+- Revise text labels and prompts in configuration modal
+- Reformat metrics table in README
+- Add several setup steps and options in README
+- Update README links and references to match headings on the linked pages
+- Add reference documentation list
 
 ## [0.1.0] - {{current_date}}
 
