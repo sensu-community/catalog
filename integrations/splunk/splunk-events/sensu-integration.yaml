@@ -8,8 +8,7 @@ spec:
   class: supported
   provider: events
   display_name: Splunk Events
-  short_description: >-
-    Process Sensu Events as log data in Splunk
+  short_description: Process Sensu events as log data in Splunk
   supported_platforms:
     - darwin
     - linux
@@ -22,20 +21,24 @@ spec:
     - "@nixwiz"
   prompts:
     - type: section
-      title: Splunk Endpoint
+      title: Splunk Endpoint Configuration
     - type: markdown
       body: |
-        This integration forwards Sensu Event data to a [Splunk Universal Forwarder] (recommended) or directly to a Splunk indexer.
+        This integration forwards Sensu event data to a [Splunk Universal Forwarder] (recommended) or directly to a Splunk indexer.
 
-        NOTE: If Splunk Universal Forwarders are installed directly on the Sensu Backend nodes (or K8s pods), use `localhost` or `127.0.0.1` as the host name.
+        Enter the Splunk endpoint host and port number, as well as the maximum number of connections to keep alive in the connection pool.
 
-        [Splunk Universal Forwarder]: https://docs.splunk.com/Documentation/Forwarder/8.2.5/Forwarder/Aboutforwardingandreceiving
+        **NOTE**: If Splunk Universal Forwarders are installed directly on Sensu backend nodes (or Kubernetes pods), use `localhost` or `127.0.0.1` as the host.
+
+        [Splunk Universal Forwarder]: https://docs.splunk.com/Documentation/Forwarder/latest/Forwarder/Abouttheuniversalforwarder
     - type: question
       name: host
       required: true
       input:
         type: string
-        title: Host Name
+        title: Host
+        description: >-
+          Enter the endpoint host
         default: localhost
     - type: question
       name: port
@@ -43,11 +46,15 @@ spec:
       input:
         type: integer
         title: Port
+        description: >-
+          Enter the endpoint port number
     - type: question
       name: connections
       input:
         type: integer
-        title: Connections
+        title: Max number of connections
+        description: >-
+          Enter the maximum number of connections to keep alive in the connection pool (enter `0` to disable connection pooling)
         default: 5
   resource_patches:
     - resource:
@@ -60,15 +67,15 @@ spec:
           value: "[[host]]:[[port]]"
         - path: /spec/max_connections
           op: replace
-          value: connections
+          value: "[[connections]]"
   post_install:
     - type: section
       title: Success
     - type: markdown
       body: |
-        You have successfully enabled the Splunk events pipeline.
+        You enabled the Splunk Events integration.
 
-        Checks configured with the `splunk-events` pipeline will stream Sensu event and metric data to the Splunk indexer at `tcp://[[ host ]]:[[ port ]]`.
+        Sensu will stream events and metrics data from checks that reference the `splunk-events` pipeline to Splunk at `tcp://[[ host ]]:[[ port ]]`.
 
         ```yaml
         spec:
