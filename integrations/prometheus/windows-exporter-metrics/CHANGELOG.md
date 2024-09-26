@@ -7,7 +7,12 @@ to [Semantic Versioning][semver].
 
 ## Unreleased
 
-- N/A
+- Move labels to the subscription screen in the integration yaml
+- Revise text labels and prompts in configuration modal
+- Add summary for success screen in integration yaml file
+- Add interval patch in integration yaml
+- Add and revise setup steps and options in README
+- Update reference documentation list in README
 
 ## [ 20220421.0.0 ] - 2022-04-21
 
