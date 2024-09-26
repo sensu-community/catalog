@@ -7,8 +7,8 @@ metadata:
 spec:
   class: supported
   provider: incidents
-  display_name: Pagerduty
-  short_description: Create & resolve incidents in Pagerduty
+  display_name: PagerDuty
+  short_description: Create and resolve incidents in PagerDuty
   tags:
     - pagerduty
     - incidents
@@ -21,14 +21,12 @@ spec:
     - "@thoward"
   prompts:
     - type: section
-      title: Pagerduty Configuration
+      title: PagerDuty Configuration
     - type: markdown
       body: |
-        This integration requires a Pagerduty Integration Key for Pagerduty API Authentication.
+        Specify the PagerDuty [integration key] for PagerDuty authentication.
 
-        Please visit the Pagerduty knowledge base article ["Generate an Integration Key"] for more information.
-
-        ["Generate an Integration Key"]: https://support.pagerduty.com/docs/services-and-integrations#generate-a-new-integration-key
+        [integration key]: https://support.pagerduty.com/docs/services-and-integrations#generate-a-new-integration-key
     - type: question
       name: pagerduty_token
       required: true
@@ -42,17 +40,17 @@ spec:
             properties:
               option:
                 type: string
-                title: Pagerduty Integration Key
+                title: PagerDuty integration key
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the PagerDuty integration key
               secret:
                 type: string
-                title: Pagerduty Integration Key (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the Pagerduty Integration Key (Sensu Secret)
+                  Enter the secret name for the PagerDuty integration key
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -61,17 +59,17 @@ spec:
             properties:
               option:
                 type: string
-                title: Pagerduty Integration Key
+                title: PagerDuty integration key
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the PagerDuty integration key as a backend environment variable
               env_var:
                 type: string
-                title: Pagerduty Integration Key
+                title: PagerDuty integration key
                 description: >-
-                  Provide the Pagerduty Integration Key (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the PagerDuty integration key (key will be stored in the Sensu API as unencrypted plaintext)
   resource_patches:
     - resource:
         api_version: core/v2
@@ -91,9 +89,11 @@ spec:
       title: Success
     - type: markdown
       body: |
-        You have successfully enabled the Pagerduty incident management integration.
+        You enabled the PagerDuty integration.
 
-        Checks configured with the `pagerduty` pipeline will create, updated, and resolve incidents in Pagerduty.
+        Sensu will create, update, and resolve incidents in PagerDuty based on events from checks that reference the `pagerduty` pipeline.
+
+        Add the `pagerduty` pipeline reference to one or more checks:
 
         ```yaml
         spec:
