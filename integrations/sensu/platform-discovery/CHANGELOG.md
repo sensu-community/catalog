@@ -7,7 +7,13 @@ to [Semantic Versioning][semver].
 
 ## Unreleased
 
-- N/A
+- Revise text labels and prompts in configuration modal
+- Revise summary for success screen in integration yaml file
+- Add list of resources in the README overview
+- Removed subscription examples that are not included in the integration
+- Add and revise setup steps and options in README
+- Revise reference documentation list in README
+
 
 ## [ 20220421.0.0 ] - 2022-04-21
 

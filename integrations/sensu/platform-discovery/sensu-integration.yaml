@@ -8,7 +8,7 @@ spec:
   class: supported
   provider: discovery
   display_name: Platform Discovery
-  short_description: Platform auto-discovery adds agent OS/platform subscription(s).
+  short_description: Automatically discover entity OS and platform and manage subscriptions
   supported_platforms:
     - darwin
     - linux
@@ -21,14 +21,10 @@ spec:
     - "@calebhailey"
   prompts:
     - type: section
-      title: Sensu API Configuration
+      title: Sensu API Key
     - type: markdown
       body: |
-        This integration includes a check for collecting Agent OS/platform metadata, and a pipeline for updating agent subscriptions.
-        The pipeline needs write access to the Sensu Entity API.
-        Please configure a secret for a Sensu API Key w/ the necessary privileges.
-
-        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/
+        Specify the Sensu API key this integration should use for API authentication.
     - type: question
       name: sensu_api_key
       required: true
@@ -47,12 +43,12 @@ spec:
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the API key
               secret:
                 type: string
-                title: Sensu API Key (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the Sensu API Key (Sensu Secret)
+                  Enter the secret name for the API key
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -64,14 +60,14 @@ spec:
                 title: Sensu API Key
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the API key as a backend environment variable
               env_var:
                 type: string
                 title: Sensu API Key
                 description: >-
-                  Provide the Sensu API Key (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the API key (API key will be stored in the Sensu API as unencrypted plaintext)
   resource_patches:
     - resource:
         api_version: core/v2
@@ -86,3 +82,11 @@ spec:
           value:
             secret: "[[sensu_api_key.secret]]"
             name: SENSU_API_KEY
+  post_install:
+    - type: section
+      title: Success
+    - type: markdown
+      body: |
+        You enabled the Platform Discovery integration.
+
+        Sensu will send events from the `platform-discovery` check to the `entity-manager` pipeline for automatic subscription management.
