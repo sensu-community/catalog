@@ -18,33 +18,30 @@ spec:
     - prometheus
     - cockroachdb
     - database
-    - linux
-    - darwin
-    - windows
   contributors:
     - "@sensu"
     - "@thoward"
   prompts:
     - type: section
-      title: CockroachDB  Metrics HTTP Endpoint Configuration
+      title: CockroachDB Metrics Prometheus Endpoint Configuration
     - type: markdown
       body: |
-        Configure CockroachDB metrics HTTP endpoint with the following parameters:
+        Provide these configuration parameters for the CockroachDB Prometheus endpoint:
 
-        * **URL**: the target URL to collect metrics from (e.g. `https://localhost:8080/_status/vars`)
-          * **Protocol**: select http or https request
-          * **Host**: provide a hostname, IP address, or domain name
-          * **Port**: provide the port to check (e.g. `8080` for HTTP, `443` for HTTPS)
-          * **Path**: provide the URL path to check (e.g. `/_status/vars`)
-        * **Interval**: how often to monitor the HTTP endpoint (in seconds)
+        * Target URL to collect metrics from, such as `https://127.0.0.1:443/metrics`, separated into:
+          * Protocol (`http` or `https`)
+          * Host (hostname, IP address, or domain name)
+          * Port number
+          * Path for the Prometheus-specific CockroachDB endpoint (`/_status/vars`)
+        * Interval for collecting metrics from the endpoint (in seconds)
     - type: question
       name: protocol
       required: true
       input:
         type: string
-        title: HTTP Endpoint Protocol
+        title: Target URL protocol
         description: >-
-          Provide the HTTP endpoint protocol (i.e. "http" or "https").
+          Select the protocol for the CockroachDB target URL (`http` or `https`)
         enum:
           - http
           - https
@@ -54,27 +51,27 @@ spec:
       required: true
       input:
         type: string
-        title: HTTP Endpoint Host
+        title: Target URL host
         description: >-
-          Provide the HTTP endpoint host (e.g. "127.0.0.1")
+          Enter the host for the CockroachDB target URL
         default: 127.0.0.1
     - type: question
       name: port
       required: true
       input:
         type: integer
-        title: HTTP Endpoint Port
+        title: Target URL port
         description: >-
-          Provide the HTTP endpoint port (e.g. 8080 is the default for CockroachDB)
+          Enter the port for the CockroachDB target URL (CockroachDB default is `8080`)
         default: 8080
     - type: question
       name: path
       required: true
       input:
         type: string
-        title: HTTP Endpoint Path
+        title: Target URL path
         description: >-
-          Provide the HTTP endpoint path (e.g. "/_status/vars"; NOTE: this configuration MUST begin with a "/")
+          Enter the path for the CockroachDB target URL, `/_status/vars` (MUST begin with `/`)
         default: "/_status/vars"
     - type: question
       name: interval
@@ -82,53 +79,68 @@ spec:
         type: integer
         title: Interval
         description: >-
-          Configure the metrics endpoint monitoring interval, in seconds (60 = one minute, 300 = five minutes, 600 = 10 minutes, etc)
+          Specify the metrics collection interval, in seconds (60 = 1 minute, 300 = 5 minutes, 600 = 10 minutes)
         default: 30
-    - type: question
-      name: labels
-      input:
-        type: object
-        title: Labels
-        description: Key/value metadata
-        format: io.sensu.meta.label
-        additionalProperties:
-          type: string
     - type: section
-      title: Configure Sensu Subscriptions
+      title: Sensu Subscriptions and Check Labels
     - type: markdown
       body: |
-        Configure which Sensu Agent subscriptions this check should be run on.
-
-        E.G. A subscription that maps to the hosts that are running CockroachDB.
+        Specify the subscriptions for Sensu agents that should execute the `cockroachdb-metrics` check and the metadata labels to add to the check definition.
     - type: question
       name: subscriptions
       input:
         type: array
         items:
           type: string
-          title: Subscriptions (Origins)
+          title: Subscriptions
           ref: core/v2/entity/subscriptions
         default:
           - prometheus
           - cockroachdb
-          - linux
-          - darwin
-          - windows
+    - type: question
+      name: labels
+      input:
+        type: object
+        title: Check labels
+        description: Add metadata labels for the `cockroachdb-metrics` check
+        format: io.sensu.meta.label
+        additionalProperties:
+          type: string
     - type: section
       title: Pipeline Configuration
     - type: markdown
       body: |
-        Configure one or more [pipelines] for processing CockroachDB metrics.
+        Name the [pipelines] you want to use to process CockroachDB Metrics integration data.
 
-        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/
+        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/pipelines/
+    - type: question
+      name: alerts_pipeline
+      required: false
+      input:
+        type: string
+        title: Alert pipeline name
+        description: >-
+          Which pipeline do you want to use for alerts due to failures this integration detects?
+        ref: core/v2/pipeline/metadata/name
+        refFilter: .labels.provider == 'alerts'
+    - type: question
+      name: incidents_pipeline
+      required: false
+      input:
+        type: string
+        title: Incident pipeline name
+        description: >-
+          Which pipeline do you want to use to process incidents due to failures this integration detects?
+        ref: core/v2/pipeline/metadata/name
+        refFilter: .labels.provider == 'incidents'
     - type: question
       name: metrics_pipeline
       required: false
       input:
         type: string
-        title: Metrics Pipeline
+        title: Metrics pipeline name
         description: >-
-          How do you want to process metrics collected by this integration?
+          Which pipeline do you want to use to process the metrics this integration collects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "metrics"
         default: metrics
@@ -148,6 +160,9 @@ spec:
             --timeout 10
             --url "[[protocol]]://[[host]]:[[port]][[path]]"
         - op: replace
+          path: /spec/interval
+          value: interval
+        - op: replace
           path: /spec/subscriptions
           value: subscriptions
         - op: add
@@ -155,10 +170,29 @@ spec:
           value:
             name: "url"
             value: "[[protocol]]://[[host]]:[[port]][[path]]"
-        - op: add
-          path: /spec/pipelines/-
+        - path: /spec/pipelines/-
+          op: add
+          value:
+            api_version: core/v2
+            type: Pipeline
+            name: "[[alert_pipeline]]"
+        - path: /spec/pipelines/-
+          op: add
+          value:
+            api_version: core/v2
+            type: Pipeline
+            name: "[[incident_pipeline]]"
+        - path: /spec/pipelines/-
+          op: add
           value:
             api_version: core/v2
             type: Pipeline
             name: "[[metrics_pipeline]]"
+  post_install:
+    - type: section
+      title: Success
+    - type: markdown
+      body: |
+        You enabled the CockroachDB Metrics integration.
 
+        The `cockroachdb-metrics` check will run for all Sensu agents with these subscriptions: [[subscriptions]].
