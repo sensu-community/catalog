@@ -7,8 +7,8 @@ metadata:
 spec:
   class: community
   provider: monitoring
-  display_name: Cassandra monitoring
-  short_description: Cassandra `nodetool` checks and `tpstats` metrics
+  display_name: Cassandra Monitoring
+  short_description: Alert for node issues amd collect Cassandra metrics
   supported_platforms:
     - darwin
     - linux
@@ -22,10 +22,10 @@ spec:
     - "@thoward"
   prompts:
     - type: section
-      title: Configure Sensu Subscriptions
+      title: Sensu Subscriptions
     - type: markdown
       body: |
-        Configure which Sensu Agent subscriptions this check should be run on.
+        Specify the subscriptions for Sensu agents that should execute the `cassandra-healthcheck` and `cassandra-metrics` checks
     - type: question
       name: subscriptions
       input:
@@ -40,25 +40,17 @@ spec:
       title: Configure Event Processing Pipelines
     - type: markdown
       body: |
-        Configure the event processing pipelines for processing NGINX events and metrics.
-    - type: question
-      name: metrics_pipeline
-      required: false
-      input:
-        type: string
-        title: Metrics Pipeline
-        description: >-
-          How do you want to process metrics collected by this integration?
-        ref: core/v2/pipeline/metadata/name
-        refFilter: .labels.provider == 'metrics'
+        Name the [pipelines] you want to use to process Cassandra Monitoring integration data.
+
+        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/pipelines/
     - type: question
       name: alerts_pipeline
       required: false
       input:
         type: string
-        title: Alert Pipeline
+        title: Alert pipeline name
         description: >-
-          How do you want to be alerted for failures detected by this integration (e.g. Slack or Microsoft Teams)?
+          Which pipeline do you want to use for alerts due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == 'alerts'
     - type: question
@@ -66,11 +58,21 @@ spec:
       required: false
       input:
         type: string
-        title: Incident Pipeline
+        title: Incident management pipeline name
         description: >-
-          How do you want to process incidents for failures detected by this integration (e.g. Atlassian JIRA/ServiceDesk, or Pagerduty)?
+          Which pipeline do you want to use to process incidents due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == 'incidents'
+    - type: question
+      name: metrics_pipeline
+      required: false
+      input:
+        type: string
+        title: Metrics pipeline name
+        description: >-
+          Which pipeline do you want to use to process the metrics this integration collects?
+        ref: core/v2/pipeline/metadata/name
+        refFilter: .labels.provider == 'metrics'
   resource_patches:
     - resource:
         api_version: core/v2
@@ -106,3 +108,11 @@ spec:
             api_version: core/v2
             type: Pipeline
             name: "[[incidents_pipeline]]"
+  post_install:
+    - type: section
+      title: Success
+    - type: markdown
+      body: |
+        You enabled the Cassandra Monitoring integration.
+
+        The `cassandra-healthcheck` and `cassandra-metrics` checks will run for all Sensu agents with these subscriptions: [[subscriptions]].
