@@ -1,0 +1,76 @@
+---
+type: Pipeline
+api_version: core/v2
+metadata:
+  name: opentsdb-metrics
+  labels:
+    provider: metrics
+spec:
+  workflows:
+  - name: opentsdb-metrics
+    filters:
+      - api_version: core/v2
+        type: EventFilter
+        name: has_metrics
+    handler:
+      api_version: core/v2
+      type: Handler
+      name: opentsdb
+---
+type: Handler
+api_version: core/v2
+metadata:
+  name: opentsdb
+spec:
+  type: pipe
+  command: sensu-opentsdb-handler --host $OPENTSDB_HOST --port $OPENTSDB_PORT --prefix sensu --tags type=system,source=sensu
+  env_vars: []
+  filters:
+  - has_metrics
+  runtime_assets:
+  - sensu-opentsdb-handler
+---
+type: Asset
+api_version: core/v2
+metadata:
+  name: sensu-opentsdb-handler
+  annotations:
+    io.sensu.bonsai.url: https://bonsai.sensu.io/assets/sensu/sensu-opentsdb-handler
+    io.sensu.bonsai.api_url: https://bonsai.sensu.io/api/v1/assets/sensu/sensu-opentsdb-handler
+    io.sensu.bonsai.tier: Supported
+    io.sensu.bonsai.version: 0.1.0
+    io.sensu.bonsai.namespace: sensu
+    io.sensu.bonsai.name: sensu-opentsdb-handler
+    io.sensu.bonsai.tags: handler, opentsdb
+spec:
+  builds:
+  - url: https://assets.bonsai.sensu.io/52aabcfd313ae1f31f28f38a58e21f8c85b0db04/sensu-opentsdb-handler_0.1.0_linux_armv7.tar.gz
+    sha512: eca49204be27bee60d3a95347e19ea77a323e7e4296ad2512995a3cc2810601053d7606a511efeda6154e68b73ac121dfc3bdbe03645009750278c9eca59a7c5
+    filters:
+    - entity.system.os == 'linux'
+    - entity.system.arch == 'armv7'
+  - url: https://assets.bonsai.sensu.io/52aabcfd313ae1f31f28f38a58e21f8c85b0db04/sensu-opentsdb-handler_0.1.0_linux_arm64.tar.gz
+    sha512: 7139ebf31fee6d44a4ae6287f783ff2c5d7d94c76ebd46c553b7c06a036210212404f90c88af8155afdaa0c5e982e9266f69d168216cefaeb25219ee21c037a6
+    filters:
+    - entity.system.os == 'linux'
+    - entity.system.arch == 'arm64'
+  - url: https://assets.bonsai.sensu.io/52aabcfd313ae1f31f28f38a58e21f8c85b0db04/sensu-opentsdb-handler_0.1.0_linux_386.tar.gz
+    sha512: 536948629e6b3d67104cca522ddb2505a9d970c7c72065447e7cb18401a17ab4b191999f3b51a132afd72dd304325f956e8cbe1277ca2d5706bc8c7a30f5a0fa
+    filters:
+    - entity.system.os == 'linux'
+    - entity.system.arch == '386'
+  - url: https://assets.bonsai.sensu.io/52aabcfd313ae1f31f28f38a58e21f8c85b0db04/sensu-opentsdb-handler_0.1.0_linux_amd64.tar.gz
+    sha512: 720ff3bffd67e80e745d14130f146a7fb4c27d0ee3e98b810f3b533761462d6e066e0c5eeb8cbca8ff6442edff2c758bb4decd06183e4755f375815720376332
+    filters:
+    - entity.system.os == 'linux'
+    - entity.system.arch == 'amd64'
+  - url: https://assets.bonsai.sensu.io/52aabcfd313ae1f31f28f38a58e21f8c85b0db04/sensu-opentsdb-handler_0.1.0_darwin_amd64.tar.gz
+    sha512: 4724b9a9e1031d0a542fbdef557fff715d119eb8fc5aaf06cc69d8477e4993892bb04868918d7978476f450d6db8d9c3f0bce41b0d672437e60b8ada32bec707
+    filters:
+    - entity.system.os == 'darwin'
+    - entity.system.arch == 'amd64'
+  - url: https://assets.bonsai.sensu.io/52aabcfd313ae1f31f28f38a58e21f8c85b0db04/sensu-opentsdb-handler_0.1.0_windows_amd64.tar.gz
+    sha512: 109c9872f211da238d2f6240c51ef26b9641054e8aa05116eeb7645f2de8ca4085535bde7da0cc75e061e67ca18810a4bccc76d04b9b205a698e4881bbda7f08
+    filters:
+    - entity.system.os == 'windows'
+    - entity.system.arch == 'amd64'

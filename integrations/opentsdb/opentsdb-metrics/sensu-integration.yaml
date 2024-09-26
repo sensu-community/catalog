@@ -1,0 +1,54 @@
+---
+api_version: catalog/v1
+type: Integration
+metadata:
+  namespace: "opentsdb"
+  name: "opentsdb-metrics"
+spec:
+  class: supported
+  provider: metrics
+  display_name: OpenTSDB Metrics
+  short_description: Send metrics to an OpenTSDB database
+  tags:
+    - opentsdb
+    - metrics
+  contributors:
+    - "@sensu"
+  prompts:
+    - type: section
+      title: OpenTSDB Metrics configuration
+
+    - type: markdown
+      body: |
+        This integration requires configuration to connect to an OpenTSDB database.
+
+    - type: question
+      name: opentsdb_host
+      input:
+        type: string
+        required: true
+        title: OpenTSDB Database Host
+        description: >-
+          Host on which the OpenTSDB database resides
+
+    - type: question
+      name: opentsdb_port
+      input:
+        type: integer
+        title: OpenTSDB Database Port
+        description: >-
+          Port on which the OpenTSDB database listens
+        default: 4242
+
+  resource_patches:
+    - resource:
+        api_version: core/v2
+        type: Handler
+        name: opentsdb
+      patches:
+        - path: /spec/env_vars/-
+          op: add
+          value: "OPENTSDB_HOST=[[opentsdb_host]]"
+        - path: /spec/env_vars/-
+          op: add
+          value: "OPENTSDB_PORT=[[opentsdb_port]]"
