@@ -7,8 +7,8 @@ metadata:
 spec:
   class: supported
   provider: monitoring
-  display_name: SSL Certificate File Monitoring (Local)
-  short_description: Monitor Local SSL Certificate File Validity
+  display_name: SSL Certificate Monitoring (Local)
+  short_description: Monitor and collect metrics for local SSL certificate files
   supported_platforms:
     - linux
     - darwin
@@ -24,82 +24,79 @@ spec:
     - "@thoward"
   prompts:
     - type: section
-      title: SSL Certificate Check
+      title: SSL Certificate Path and Sensu Subscriptions
     - type: markdown
       body: |
-        Configure your SSL Certificate Check with the following parameters:
-
-        * File path
+        Provide the path for your SSL certificate file and the subscriptions for Sensu agents that should execute the `ssl-certfile-monitoring` check.
     - type: question
       name: path
       required: true
       input:
         type: string
-        title: SSL Certificate File Path
+        title: Path for SSL certificate
         description: >-
-          Provide the SSL certificate file path (e.g. /var/lib/path/to/my/certificate)
-    - type: section
-      title: Check Thresholds
-    - type: markdown
-      body: |
-        Configure Sensu check warning and critical thresholds for:
-
-          * Days Left Minimum Thresholds (warning and critical)
-          * Days Since Issued Maximum Threshold
-
-    - type: question
-      name: ssl_cert_check_days_left_critical_threshold
-      required: false
-      input:
-        default: 7
-        type: integer
-        title: Days Left Critical Threshold
-        description: >-
-          The minimum number of days left on the certificate before triggering a critical alert (default 7 days).
-    - type: question
-      name: ssl_cert_check_days_left_warning_threshold
-      input:
-        default: 15
-        type: integer
-        title: Days Left Warning Threshold
-        description: >-
-          The minimum number of days left on the certificate before triggering a warning alert (default 15 days).
-    - type: question
-      name: ssl_cert_check_days_issued_critical_threshold
-      input:
-        default: 398
-        type: integer
-        title: Days Issued Critical Threshold
-        description: >-
-          The maximum number of days since the certificate was issued before triggering a critical alert (default 398 days).
-    - type: section
-      title: Configure Sensu Subscriptions
-    - type: markdown
-      body: |
-        Configure which Sensu Agent subscriptions this check should be run on.
+          Enter the path for the SSL certificate file (e.g. /var/lib/path/to/my/certificate)
     - type: question
       name: subscriptions
       input:
         type: array
         items:
           type: string
-          title: Sensu Subscriptions
+          title: Subscriptions
           ref: core/v2/entity/subscriptions
+        default:
+          - ssl
+    - type: section
+      title: Check Thresholds
+    - type: markdown
+      body: |
+        Provide these configuration parameters for Sensu check thresholds:
+
+        * WARNING threshold for number of days left before SSL certificate expiry
+        * CRITICAL threshold for number of days left before SSL certificate expiry
+        * CRITICAL threshold for number of days for which the SSL certificate is issued (many clients do not accept certificates that are issued for more than [398 days])
+
+        [398 days]: https://www.ssl.com/blogs/398-day-browser-limit-for-ssl-tls-certificates-begins-september-1-2020/
+    - type: question
+      name: ssl_cert_check_days_left_warning_threshold
+      input:
+        default: 15
+        type: integer
+        title: Days left (WARNING threshold)
+        description: >-
+          Specify the number of days remaining before SSL certificate expiry that will trigger a WARNING alert (default is 15)
+    - type: question
+      name: ssl_cert_check_days_left_critical_threshold
+      required: false
+      input:
+        default: 7
+        type: integer
+        title: Days left (CRITICAL threshold)
+        description: >-
+          Specify the number of days remaining before SSL certificate expiry that will trigger a CRITICAL alert (default is 7)
+    - type: question
+      name: ssl_cert_check_days_issued_critical_threshold
+      input:
+        default: 398
+        type: integer
+        title: Days issued (CRITICAL threshold)
+        description: >-
+          Specify the number of days for which the certificate is issued that will trigger a CRITICAL alert (default is 398)
     - type: section
       title: Pipeline Configuration
     - type: markdown
       body: |
-        Configure one or more [pipelines] for processing SSL Cert monitoring events.
+        Name the [pipelines] you want to use to process SSL Certificate File Monitoring (Local) integration data.
 
-        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/
+        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/pipelines/
     - type: question
       name: alert_pipeline
       required: false
       input:
         type: string
-        title: Alert Pipeline
+        title: Alert pipeline name
         description: >-
-          How do you want to be alerted for failures detected by this pipeline (e.g. Slack or Microsoft Teams)?
+          Which pipeline do you want to use for alerts due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "alerts"
     - type: question
@@ -107,9 +104,9 @@ spec:
       required: false
       input:
         type: string
-        title: Incident Management Pipeline
+        title: Incident management pipeline name
         description: >-
-          How do you want to process incidents for failures detected by this pipeline (e.g. Atlassian JIRA/ServiceDesk, or Pagerduty)?
+          Which pipeline do you want to use to process incidents due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "incidents"
     - type: question
@@ -117,9 +114,9 @@ spec:
       required: false
       input:
         type: string
-        title: Metrics Pipeline
+        title: Metrics pipeline name
         description: >-
-          How do you want to process metrics collected by this integration?
+          Which pipeline do you want to use to process the metrics this integration collects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "metrics"
   resource_patches:
@@ -135,7 +132,7 @@ spec:
             --cert file://[[path]]
         - path: /spec/subscriptions
           op: replace
-          value: subscriptions
+          value: "[[subscriptions]]"
         - path: /spec/output_metric_tags/-
           op: add
           value:
@@ -173,4 +170,6 @@ spec:
       title: Success
     - type: markdown
       body: |
-        You have successfully enabled SSL Certificate monitoring.
+        You enabled the SSL Certificate File Monitoring (Local) integration for the certificate at [[path]].
+
+        The `ssl-certfile-monitoring` check will run for all Sensu agents with these subscriptions: [[subscriptions]].
