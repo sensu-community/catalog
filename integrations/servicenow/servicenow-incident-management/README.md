@@ -2,24 +2,24 @@
 
 <!-- Sensu Integration description; supports markdown -->
 
-The ServiceNow Incident Management integration provides support for automatically creating, updating, and resolving ServiceNow Incidents from Sensu Events.
+The ServiceNow Incident Management integration provides support for automatically creating, updating, and resolving ServiceNow incidents based on Sensu events.
 
-This integration supports custom ServiceNow Incident Management tables and custom Incident fields, with per-host and per-check configuration overrides.
-See the Setup section below for more information.
+This integration is compatible with ServiceNow versions **Rome and older**.
 
 <!-- Provide a high level overview of the integration contents (e.g. checks, filters, mutators, handlers, assets, etc) -->
 
-This integration includes the following resources:
+This integration includes the following Sensu resources:
 
-* `servicenow-incidents` [pipeline]
 * `servicenow-incidents` [handler]
-* `sensu/sensu-servicenow-handler:3.0.0` [asset]
+* `discovery-only` [filter]
+* `servicenow-incidents` [pipeline]
+* `sensu/sensu-servicenow-handler:3.0.2` [asset]
 
 ## Dashboards
 
 <!-- List of compatible dashboards w/ screenshots (supports png, jpeg, and gif images; relative paths only; e.g. `![](img/dashboard-1.png)` )-->
 
-This integration is compatible with ServiceNow Incident Management dashboards.
+The ServiceNow Incident Management integration is compatible with ServiceNow incident management dashboards.
 
 ![](img/incident-dashboard.png)
 
@@ -28,11 +28,24 @@ This integration is compatible with ServiceNow Incident Management dashboards.
 <!-- Sensu Integration setup instructions, including Sensu agent configuration and external component configuration -->
 <!-- EXAMPLE: what configuration (if any) is required in a third-party service to enable monitoring? -->
 
-1. **Enable ServiceNow Incident management**
+1. Get the ServiceNow instance's base URL (e.g. https://mycompany.service-now.com), username, and password.
 
-   Checks configured with the `servicenow-incidents` [pipeline] may be used to enable ServiceNow Incident Management.
+   **Optional**: If you want to use Sensu [secrets] to represent the ServiceNow username and password, you will need the secret names when you install this integration.
 
-   Example:
+1. If your organization has a customized ServiceNow instance, get the following configuration information:
+
+    - Name of the ServiceNow incident table to use for managing incidents
+    - Field name that Sensu should use to look up CIs (the incident key)
+    - [Handler templates][handler-templating] for the incident short description and work notes
+    - Custom incident properties to populate from Sensu entity [annotations]
+
+    **NOTE**: If you are using an unmodified ServiceNow instance, the installation steps for this integration include default configuration details. You do not need custom configuration to use this integration.
+
+1. Enable ServiceNow incident management registration by specifying a check pipeline reference.
+   
+   <details><summary><strong>Example: Check pipeline reference configuration</strong></summary>
+
+   To enable ServiceNow incident management registration only for entities that execute a specific check, add the `servicenow-incidents` [pipeline] to the check definition.
 
    ```yaml
    spec:
@@ -42,11 +55,14 @@ This integration is compatible with ServiceNow Incident Management dashboards.
          name: servicenow-incidents
    ```
 
-1. **[OPTIONAL] Customize ServiceNow Incident Management configuration**
+   </details>
+   <br>
 
-   Sensu Entity & Check annotations may be used to override the default ServiceNow Incident Management integration configuration.
+1. **Optional** Specify custom ServiceNow incident configuration on a per-entity or per-check basis.
 
-   Examples:
+   <details><summary><strong>Example: Custom incident table and asset tag configuration</strong></summary>
+
+   The ServiceNow Incident Management integration uses the configuration parameters you specify during installation. To override the installed configuration for a single entity or check, add [annotations] with the prefix `servicenow/config/` to the `agent.yml` configuration file or the check definition.
 
    ```yaml
    annotations:
@@ -54,7 +70,38 @@ This integration is compatible with ServiceNow Incident Management dashboards.
      servicenow/config/incident-work-notes: "{{ .Check.Annotations.servicenow_work_notes }}"
    ```
 
-   For more information, please visit the [ServiceNow Handler "Annotations" reference documentation].
+   For a complete list of available annotations, read the [sensu/sensu-servicenow-handler annotations documentation].
+
+   </details>
+   <br>
+
+1. **Optional** Configure custom ServiceNow incident properties.
+
+   <details><summary><strong>Example: Custom ServiceNow incident property configuration</strong></summary>
+
+   The ServiceNow Incident Management integration supports ServiceNow incident tables with custom fields.
+
+   When you install this integration, you can list custom incident properties to populate from Sensu entity [annotations] with the prefix `servicenow/table/incident/`. If an entity includes a matching annotation, Sensu will populate the corresponding field in the ServiceNow incident table with the annotation's value.
+
+   For example, if you list the `category` and `store_id` custom CI properties when you install this integration, Sensu will check entities for matching annotations.
+
+   Set the entity annotations in the `agent.yml` configuration file:
+
+   ```yaml
+   annotations:
+     servicenow/table/incident/category: "software"
+     servicenow/table/incident/store_id: "1234"
+   ```
+
+   To add custom incident properties after installing this integration, update the `servicenow-incidents` handler command to list the additional properties in the `--incident-properties` flag values:
+
+   ```yaml
+   command: >-
+    sensu-servicenow-handler --incident-management --incident-table incident --incident-key short_description --incident-description "{{ .Check.State }}" --incident-work-notes "{{ .Check.Output }}" --incident-properties "category,store_id,location"
+   ```
+
+   </details>
+   <br>
 
 2. **[OPTIONAL] Customize ServiceNow Incident properties**
 
@@ -72,20 +119,13 @@ This integration is compatible with ServiceNow Incident Management dashboards.
      servicenow/table/incident/store_id: "1234"
    ```
 
-[Sensu Entity]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-entities/entities/
-[ServiceNow Handler "Annotations" reference documentation]: https://bonsai.sensu.io/assets/sensu/sensu-servicenow-handler#annotations
-
 ## Plugins
 
 <!-- Links to any Sensu Integration dependencies (i.e. Sensu Plugins) -->
 
+The ServiceNow Incident Management integration uses the following Sensu [plugins]:
+
 - [sensu/sensu-servicenow-handler][sensu-servicenow-handler-bonsai]
-
-## Metrics & Events
-
-<!-- List of all metrics or events collected by this integration. -->
-
-This integration does not produce any [metrics].
 
 ## Alerts
 
@@ -93,13 +133,21 @@ This integration does not produce any [metrics].
 
 <!-- This integration provides an alert & incident management processing pipeline for use with other monitoring integrations. By default this integration will process all events passing the [built-in `is_incident` filter][is_incident] (i.e. failing events and resolution events only). Event processing via this integration may be suppressed using [Sensu Silencing][silences] (see the [built-in `not_silenced` filter][not_silenced] for more details). -->
 
-This integration does not produce any events that should be processed by an alert or incident management [pipeline].
+The ServiceNow Incident Management integration does not produce any events that should be processed by an alert or incident management [pipeline].
+
+## Metrics
+
+<!-- List of all metrics or events collected by this integration. -->
+
+The ServiceNow Incident Management integration does not produce any [metrics].
 
 ## Reference Documentation
 
 <!-- Please provide links to any relevant reference documentation to help users learn more and/or troubleshoot this integration; specifically including any third-party software documentation. -->
 
-1. This integration uses [Handler Templating][handler-templating] for variable substitution.
+* [Handler templating][handler-templating] (Sensu documentation): the ServiceNow Incident Management integration supports handler templating for variable substitution with data from Sensu events
+* [Incident Management][servicenow-incident-mgmt] (ServiceNow documentation)
+
 
 <!-- Links -->
 [check]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-schedule/checks/
@@ -119,5 +167,6 @@ This integration does not produce any events that should be processed by an aler
 [tokens]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-schedule/tokens/
 [handler-templating]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/handler-templates/
 [sensu-plus]: https://sensu.io/features/analytics
-[{{dashboard-link}}]: #
 [sensu-servicenow-handler-bonsai]: https://bonsai.sensu.io/assets/sensu/sensu-servicenow-handler
+[servicenow-incident-mgmt]: https://docs.servicenow.com/bundle/rome-it-service-management/page/product/incident-management/concept/c_IncidentManagement.html
+[sensu/sensu-servicenow-handler annotations documentation]: https://bonsai.sensu.io/assets/sensu/sensu-servicenow-handler#annotations

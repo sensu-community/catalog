@@ -7,7 +7,10 @@ to [Semantic Versioning][semver].
 
 ## Unreleased
 
-- N/A
+- Revise text labels and prompts in configuration modal
+- Revise summary for success and remove second screen in integration yaml file
+- Add and revise setup steps and options in README
+- Revise and add to reference documentation list in README
 
 ## [ 20220421.0.0 ] - 2022-04-21
 
