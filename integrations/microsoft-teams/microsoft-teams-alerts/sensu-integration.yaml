@@ -7,8 +7,8 @@ metadata:
 spec:
   class: supported
   provider: alerts
-  display_name: Microsoft Teams Alerts
-  short_description: Send alerts via Microsoft Teams
+  display_name: Microsoft Teams
+  short_description: Send alerts to a Microsoft Teams channel
   tags:
     - microsoft-teams
     - alerts
@@ -22,11 +22,9 @@ spec:
       title: Microsoft Teams Configuration
     - type: markdown
       body: |
-        This integration requires a Microsoft Teams Webhook URL for Microsoft Teams API Authentication.
+        Specify the Microsoft Teams [webhook URL] for the channel that should receive alerts.
 
-        Please visit [Microsoft Teams Incoming Webhook] documentation for more information.
-
-        [Microsoft Teams Incoming Webhook]: https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook
+        [webhook URL]: https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook
     - type: question
       name: microsoft_teams_webhook_url
       required: true
@@ -40,17 +38,17 @@ spec:
             properties:
               option:
                 type: string
-                title: Microsoft Teams Webhook URL
+                title: Microsoft Teams webhook URL
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the Microsoft Teams webhook URL
               secret:
                 type: string
-                title: Microsoft Teams Webhook URL (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the Microsoft Teams Webhook URL (Sensu Secret)
+                  Enter the secret name for the Microsoft Teams webhook URL
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -59,17 +57,17 @@ spec:
             properties:
               option:
                 type: string
-                title: Microsoft Teams Webhook URL
+                title: Microsoft Teams webhook URL
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the Microsoft Teams webhook URL as a backend environment variable
               env_var:
                 type: string
                 title: Microsoft Teams Webhook URL
                 description: >-
-                  Provide the Microsoft Teams Webhook URL (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the Microsoft Teams webhook URL (URL will be stored in the Sensu API as unencrypted plaintext)
   resource_patches:
     - resource:
         api_version: core/v2
@@ -89,9 +87,11 @@ spec:
       title: Success
     - type: markdown
       body: |
-        You have successfully enabled the Microsoft Teams alerts integration.
+        You enabled the Microsoft Teams integration.
 
-        Checks configured with the `microsoft-teams` pipeline will generate alerts in Microsoft Teams.
+        Sensu will forward events from checks that reference the `microsoft-teams` pipeline via the Microsoft Teams webhook URL.
+
+        Add the `microsoft-teams` pipeline reference to one or more checks:
 
         ```yaml
         spec:
