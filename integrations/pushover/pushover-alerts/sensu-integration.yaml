@@ -8,7 +8,7 @@ spec:
   class: supported
   provider: alerts
   display_name: Pushover Alerts
-  short_description: Integrates Sensu Integrations with Pushover Push Notifications
+  short_description: Send alerts as Pushover notifications
   supported_platforms:
     - linux
   tags:
@@ -22,13 +22,10 @@ spec:
     - "@calebhailey"
   prompts:
     - type: section
-      title: Pushover Application
+      title: Pushover Configuration
     - type: markdown
       body: |
-        This integration requires access to a Pushover Application. Please provide the following configuration:
-
-        * Pushover User Key
-        * Pushover
+        Specify the Pushover user identifier and application API token.
     - type: question
       name: pushover_user_key
       required: true
@@ -42,17 +39,17 @@ spec:
             properties:
               option:
                 type: string
-                title: Pushover User Key
+                title: Pushover user identifier
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the Pushover user identifier
               secret:
                 type: string
-                title: Pushover User Key (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the Pushover User Key (Sensu Secret)
+                  Enter the secret name for the Pushover user identifier
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -61,17 +58,17 @@ spec:
             properties:
               option:
                 type: string
-                title: Pushover User Key
+                title: Pushover user identifier
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the Pushover user identifier as a backend environment variable
               env_var:
                 type: string
-                title: Pushover User Key
+                title: Pushover user identifier
                 description: >-
-                  Provide the Pushover User Key (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the Pushover user identifier (identifier will be stored in the Sensu API as unencrypted plaintext)
     - type: question
       name: pushover_app_api_token
       required: true
@@ -90,12 +87,12 @@ spec:
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the Pushover application API token
               secret:
                 type: string
-                title: Pushover Application API Token (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the Pushover Application API Token (Sensu Secret)
+                  Enter the secret name for the Pushover application API token
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -104,17 +101,17 @@ spec:
             properties:
               option:
                 type: string
-                title: Pushover Application API Token
+                title: Pushover application API token
                 const: env_var
                 constLocale:
                   title: Environment Variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the Pushover application API token as a backend environment variable
               env_var:
                 type: string
                 title: Pushover Application API Token
                 description: >-
-                  Provide the Pushover Application API Token (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the Pushover application API token (token name will be stored in the Sensu API as unencrypted plaintext)
   resource_patches:
     - resource:
         api_version: core/v2
@@ -142,14 +139,16 @@ spec:
       title: Success
     - type: markdown
       body: |
-        You have successfully enabled the Pushover alerts integration.
+        You enabled the Pushover Alerts integration.
 
-        Checks configured with the `pushover-alerts` pipeline will generate alerts in Pushover.
+        Sensu will forward events from checks that reference the `pushover-metrics` pipeline to the specified user.
+
+        Add the `pushover-metrics` pipeline reference to one or more checks:
 
         ```yaml
         spec:
           pipelines:
             - api_version: core/v2
               type: Pipeline
-              name: pushover-alerts
+              name: pushover-metrics
         ```
