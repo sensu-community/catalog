@@ -8,7 +8,7 @@ spec:
   class: supported
   provider: alerts
   display_name: Email Alerts
-  short_description: A pipeline to send emails about Sensu incidents.
+  short_description: Send Sensu events to email addresses
   supported_platforms:
     - darwin
     - linux
@@ -25,56 +25,28 @@ spec:
     - "@calebhailey"
   prompts:
     - type: section
-      title: Email Settings
+      title: Email Server, Port, and Authentication
     - type: markdown
       body: |
-        This integration requires one or more email settings.
+        Specify the SMTP server address (hostname) and port name, as well as SMTP username and password.
     - type: question
       name: smtp_server
       required: true
       input:
         type: string
-        title: SMTP Server Address
+        title: SMTP server address
         description: >-
-          Provide the SMTP Server Address
+          Enter the SMTP server address (hostname)
         default: 127.0.0.1
     - type: question
       name: smtp_port
       required: true
       input:
         type: integer
-        title: SMTP Server Port
+        title: SMTP server port
         description: >-
-          Provide the SMTP Server Port number
+          Enter the SMTP server port number
         default: 587
-    - type: question
-      name: email_sender
-      required: true
-      input:
-        type: string
-        title: Sender Email Address
-        description: >-
-          Provide the sender email address (e.g. who the alerts will be sent "from")
-        default: sensu@yourcompany.com
-    - type: question
-      name: email_recipient
-      required: true
-      input:
-        type: string
-        title: Recipient Email Address
-        description: >-
-          Provide the recipient email address (e.g. where alerts will be sent "to").
-        default: oncall@yourcompany.com
-    - type: section
-      title: SMTP Credentials
-    - type: markdown
-      body: |
-        Please provide an SMTP username and password _OR_ select [Sensu Secrets].
-
-        Please see the [Sensu Email Handler] reference documentation for more information.
-
-        [Sensu Secrets]: https://docs.sensu.io/sensu-go/latest/operations/manage-secrets/secrets/
-        [Sensu Email Handler]: https://github.com/sensu/sensu-email-handler#environment-variables
     - type: question
       name: smtp_username
       required: true
@@ -88,17 +60,17 @@ spec:
             properties:
               option:
                 type: string
-                title: SMTP Username
+                title: SMTP username
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the SMTP username
               secret:
                 type: string
-                title: SMTP Username (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the SMTP Username (Sensu Secret)
+                  Enter the secret name for the SMTP username
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -107,17 +79,17 @@ spec:
             properties:
               option:
                 type: string
-                title: SMTP Username
+                title: SMTP username
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the SMTP username as a backend environment variable
               env_var:
                 type: string
-                title: SMTP Username
+                title: SMTP username
                 description: >-
-                  Provide the SMTP Username (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
+                  Enter the Elasticsearch username (username will be stored in the Sensu API as unencrypted plaintext)
     - type: question
       name: smtp_password
       required: true
@@ -131,17 +103,17 @@ spec:
             properties:
               option:
                 type: string
-                title: SMTP Password
+                title: SMTP password
                 const: secret
                 constLocale:
                   title: Secret
                   description: >-
-                    Select this option to use Sensu Secrets Management
+                    Use a Sensu secret to provide the SMTP password
               secret:
                 type: string
-                title: SMTP Password (Sensu Secret)
+                title: Secret name
                 description: >-
-                  Select the SMTP Password (Sensu Secret)
+                  Enter the secret name for the SMTP password
                 ref: secrets/v1/secret/metadata/name
           - type: object
             required:
@@ -150,18 +122,37 @@ spec:
             properties:
               option:
                 type: string
-                title: SMTP Password
+                title: SMTP password
                 const: env_var
                 constLocale:
-                  title: Environment Variable
+                  title: Environment variable
                   description: >-
-                    Select this option to store sensitive configuration as environment variables
+                    Save the SMTP password as a backend environment variable
               env_var:
                 type: string
-                title: SMTP Password
+                title: SMTP password
                 description: >-
-                  Provide the SMTP Password (NOTE: this will be stored in the Sensu API as unencrypted plaintext).
-
+                  Enter the SMTP password (password will be stored in the Sensu API as unencrypted plaintext)
+                  - type: section
+                    title: Sender and Recipient Email Addresses
+                  - type: question
+                    name: email_sender
+                    required: true
+                    input:
+                      type: string
+                      title: Sender email address
+                      description: >-
+                        Enter the sender's email address (the address the Sensu events will be sent from)
+                      default: sensu@yourcompany.com
+                  - type: question
+                    name: email_recipient
+                    required: true
+                    input:
+                      type: string
+                      title: Recipient email address
+                      description: >-
+                        Enter the recipient's email address (the address Sensu will be sent to)
+                      default: oncall@yourcompany.com
   resource_patches:
     - resource:
         api_version: core/v2
@@ -174,12 +165,6 @@ spec:
         - op: add
           path: /spec/env_vars/-
           value: "SMTP_PORT=[[smtp_port]]"
-        - op: add
-          path: /spec/env_vars/-
-          value: "EMAIL_SENDER=[[email_sender]]"
-        - op: add
-          path: /spec/env_vars/-
-          value: "EMAIL_RECIPIENT=[[email_recipient]]"
         - op: add
           path: /spec/env_vars/-
           value: "SMTP_USERNAME=[[smtp_username.env_var]]"
@@ -196,20 +181,27 @@ spec:
           value:
             secret: "[[smtp_password.secret]]"
             name: SMTP_PASSWORD
-
+        - op: add
+          path: /spec/env_vars/-
+          value: "EMAIL_SENDER=[[email_sender]]"
+        - op: add
+          path: /spec/env_vars/-
+          value: "EMAIL_RECIPIENT=[[email_recipient]]"
   post_install:
     - type: section
       title: Success
     - type: markdown
       body: |
-        You have successfully enabled the Email alerts integration.
+        You enabled the Email Alerts integration.
 
-        Checks configured with the `email-alerts` pipeline will generate email alerts from `[[email_sender]]`.
+        Sensu will forward events from checks that reference the `email` pipeline from `[[email_sender]]` to `[[email_recipient]]`.
+
+        Add the `email` pipeline reference to one or more checks:
 
         ```yaml
         spec:
           pipelines:
             - api_version: core/v2
               type: Pipeline
-              name: email-alerts
+              name: email
         ```
