@@ -7,8 +7,8 @@ metadata:
 spec:
   class: supported
   provider: monitoring
-  display_name: Kubernetes monitoring
-  short_description: Kubernetes API liveness health check.
+  display_name: Kubernetes Monitoring
+  short_description: Collect metrics and check Kubernetes API liveness.
   supported_platforms:
     - darwin
     - linux
@@ -27,19 +27,15 @@ spec:
       title: Kubernetes API Server Monitoring Configuration
     - type: markdown
       body: |
-        Please provide the following configuration parameters:
-
-        * Kubernetes API Server URL
-        * Kubernetes API Server Subscriptions
-
+                Provide the Kubernetes API server (kube-apiserver) URL and the subscriptions for Sensu agents that should execute the `kubernetes-liveness` check
     - type: question
       name: kube_apiserver_url
       required: true
       input:
         type: string
-        title: Kubernetes API Server URL
+        title: Kubernetes API server URL
         description: >-
-          Provide the kube-apiserver URL. By default services run from pods in the K8s cluster should be able reach the API server via "https://kubernetes.default.svc:443".
+          Enter the Kubernetes API server (kube-apiserver) URL (services run from pods in the Kubernetes cluster should be able reach the API server via `https://kubernetes.default.svc:443`)
         default: https://kubernetes.default.svc:443
     - type: question
       name: kube_apiserver_subscriptions
@@ -58,10 +54,7 @@ spec:
       title: Kubelet Monitoring Configuration
     - type: markdown
       body: |
-        Please provide the following configuration parameters:
-
-        * Kubelet API URL
-        * Kubelet Subscriptions
+        Provide the Kubelet API server URL and the subscriptions for Sensu agents that should execute the `kubelet-metrics`, `kubelet-probe-metrics`, and `kubelet-cadvisor-metrics` checks
     - type: question
       name: kubelet_api_url
       required: true
@@ -69,7 +62,7 @@ spec:
         type: string
         title: Kubelet API URL
         description:
-          Provide the Kubelet API URL. For sensu-agents running on the Kubelet host, or via Kubernetes daemonsets, the URL should be for a port on the localhost.
+          Provide the Kubelet API URL (for Sensu agents running on the Kubelet host or via Kubernetes DaemonSets, the URL should be for a port on the localhost)
         default: http://127.0.0.1:10255
     - type: question
       name: kubelet_api_subscriptions
@@ -87,27 +80,17 @@ spec:
       title: Pipeline Configuration
     - type: markdown
       body: |
-        Configure one or more [pipelines] for processing Kubernetes monitoring data.
+        Name the [pipelines] you want to use to process Kubernetes Monitoring integration data.
 
-        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/
-    - type: question
-      name: metrics_pipeline
-      required: false
-      input:
-        type: string
-        title: Metrics Pipeline
-        description: >-
-          How do you want to process metrics collected by this integration (e.g. via Sumo Logic)?
-        ref: core/v2/pipeline/metadata/name
-        refFilter: .labels.provider == "metrics"
+        [pipelines]: https://docs.sensu.io/sensu-go/latest/observability-pipeline/observe-process/pipelines/
     - type: question
       name: alerts_pipeline
       required: false
       input:
         type: string
-        title: Alert Pipeline
+        title: Alert pipeline name
         description: >-
-          How do you want to be alerted for failures detected by this pipeline (e.g. via Slack or Microsoft Teams)?
+          Which pipeline do you want to use for alerts due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "alerts"
     - type: question
@@ -115,11 +98,21 @@ spec:
       required: false
       input:
         type: string
-        title: Incident Management Pipeline
+        title: Incident pipeline name
         description: >-
-          How do you want to process incidents for failures detected by this pipeline (e.g. via Atlassian JIRA/ServiceDesk, or Pagerduty)?
+          Which pipeline do you want to use to process incidents due to failures this integration detects?
         ref: core/v2/pipeline/metadata/name
         refFilter: .labels.provider == "incidents"
+    - type: question
+      name: metrics_pipeline
+      required: false
+      input:
+        type: string
+        title: Metrics pipeline name
+        description: >-
+          Which pipeline do you want to use to process the metrics this integration collects?
+        ref: core/v2/pipeline/metadata/name
+        refFilter: .labels.provider == "metrics"
   resource_patches:
     - resource:
         api_version: core/v2
@@ -210,4 +203,8 @@ spec:
       title: Success
     - type: markdown
       body: |
-        You have successfully enabled the Kubernetes monitoring integration!
+        You enabled the Kubernetes Monitoring integration.
+
+        The `kubernetes-liveness` check will run for all Sensu agents with these subscriptions: [[kube_apiserver_subscriptions]].
+
+        The `kubelet-metrics`, `kubelet-probe-metrics`, `kubelet-cadvisor-metrics` checks will run for all Sensu agents with these subscriptions: [[kubelet_api_subscriptions]].
